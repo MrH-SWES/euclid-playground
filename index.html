@@ -57,7 +57,7 @@
     let width, height, midY, points = [], segments = [], guides = []; 
     let currentTool = 'point', activePoint = null, dragPos = null, snapTarget = null, cameraScale = 1, cameraX = 0, cameraY = 0;
     let filters = { len: true, ang: true, par: true, inc: true };
-    function resize() { width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight; midY = height / 2; draw(); }
+    function resize() { width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight; midY = height / 2; cameraX = 0; cameraY = midY; draw(); }
     function setTool(tool) { currentTool = tool; document.querySelectorAll('#toolbar button').forEach(b => b.classList.remove('active')); document.getElementById('btn-' + tool).classList.add('active'); }
     function toggleFilter(f) { filters[f] = !filters[f]; document.querySelector('.filter-btn.'+f).classList.toggle('active'); }
     function getDist(p1, p2) { return Math.sqrt((p1.x - p2.x)**2 + (p1.y - p2.y)**2); }
@@ -123,6 +123,7 @@
         guides.forEach(g => { const p1 = worldToScreen(g.p1.x, g.p1.y), r = getDist(g.p1, g.p2) * cameraScale; ctx.beginPath(); ctx.strokeStyle = '#d8d8d8'; ctx.setLineDash([4, 4]); ctx.arc(p1.x, p1.y, r, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]); });
         getIntersections().forEach(pt => { const p = worldToScreen(pt.x, pt.y); ctx.beginPath(); ctx.strokeStyle = 'rgba(0,122,255,0.2)'; ctx.arc(p.x, p.y, 8, 0, Math.PI * 2); ctx.stroke(); });
         segments.forEach(s => { const p1 = worldToScreen(s.p1.x, s.p1.y), p2 = worldToScreen(s.p2.x, s.p2.y); ctx.beginPath(); ctx.strokeStyle = '#1d1d1f'; ctx.lineWidth = 2.8; ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke(); });
+        
         const lenBuckets = [], angleBuckets = [], slopeBuckets = [];
         segments.forEach(s => { 
             const l = getDist(s.p1, s.p2); if(l < 5) return;
@@ -130,10 +131,14 @@
             let ang = Math.atan2(s.p2.y-s.p1.y, s.p2.x-s.p1.x) * 180 / Math.PI; if(ang < 0) ang += 180; if(ang >= 180) ang -= 180;
             let sb = slopeBuckets.find(x => getAngDiff(x.key, ang) < 1.5); if(!sb) { sb = {key: ang, items: []}; slopeBuckets.push(sb); } sb.items.push(s);
         });
+        
         if (filters.len) { lenBuckets.forEach((b, idx) => { if(b.items.length > 1) { b.items.forEach(s => { const p1 = worldToScreen(s.p1.x, s.p1.y), p2 = worldToScreen(s.p2.x, s.p2.y), mx = (p1.x+p2.x)/2, my = (p1.y+p2.y)/2, a = Math.atan2(p2.y-p1.y, p2.x-p1.x)+Math.PI/2; ctx.beginPath(); ctx.strokeStyle='#DC143C'; ctx.lineWidth=2.2; for(let i=0; i<=idx; i++) { const off = (i - idx/2)*6, ox = Math.cos(a-Math.PI/2)*off, oy = Math.sin(a-Math.PI/2)*off; ctx.moveTo(mx+ox-Math.cos(a)*8, my+oy-Math.sin(a)*8); ctx.lineTo(mx+ox+Math.cos(a)*8, my+oy+Math.sin(a)*8); } ctx.stroke(); }); } }); }
         if (filters.par) { slopeBuckets.forEach((b, idx) => { if(b.items.length > 1) { b.items.forEach(s => { const p1 = worldToScreen(s.p1.x, s.p1.y), p2 = worldToScreen(s.p2.x, s.p2.y), mx = (p1.x+p2.x)/2, my = (p1.y+p2.y)/2, a = Math.atan2(p2.y-p1.y, p2.x-p1.x); ctx.beginPath(); ctx.strokeStyle='#FFD700'; ctx.lineWidth=1.8; for(let i=0; i<=idx; i++) { const off = (i - idx/2)*8, ox = mx+Math.cos(a)*off, oy = my+Math.sin(a)*off; ctx.moveTo(ox-Math.cos(a+0.5)*10, oy-Math.sin(a+0.5)*10); ctx.lineTo(ox, oy); ctx.lineTo(ox-Math.cos(a-0.5)*10, oy-Math.sin(a-0.5)*10); } ctx.stroke(); }); } }); }
+        
         points.forEach(v => {
-            const vs = worldToScreen(v.x, v.y), conn = segments.filter(s => s.p1 === v || s.p2 === v).map(s => { const p2 = s.p1 === v ? s.p2 : s.p1; return { s, p: p2, len: getDist(v, p2), a: Math.atan2(worldToScreen(p2.x, p2.y).y - vs.y, worldToScreen(p2.x, p2.y).x - vs.x) }; }).sort((a,b) => a.a-b.a);
+            const vs = worldToScreen(v.x, v.y), conn = segments.filter(s => s.p1 === v || s.p2 === v).map(s => { 
+                const p2 = s.p1 === v ? s.p2 : s.p1; return { s, p: p2, len: getDist(v, p2), a: Math.atan2(worldToScreen(p2.x, p2.y).y - vs.y, worldToScreen(p2.x, p2.y).x - vs.x) }; 
+            }).sort((a,b) => a.a-b.a);
             for(let i=0; i<conn.length; i++) { 
                 const s1 = conn[i], s2 = conn[(i+1)%conn.length]; let d = s2.a-s1.a; if(d<0) d+=Math.PI*2; if(d>Math.PI) continue; const deg = d*180/Math.PI; if (deg < 10 || deg > 170) continue;
                 if(Math.abs(deg-90) < 1.8 && filters.ang && filters.len) { 
@@ -142,11 +147,19 @@
                     ctx.beginPath(); ctx.strokeStyle='#007AFF'; ctx.lineWidth = isPB ? 4.0 : 1.8; ctx.moveTo(vs.x+v1.x*18, vs.y+v1.y*18); ctx.lineTo(vs.x+v1.x*18+v2.x*18, vs.y+v1.y*18+v2.y*18); ctx.lineTo(vs.x+v2.x*18, vs.y+v2.y*18); ctx.stroke(); 
                 } else if(filters.ang) {
                     const minL = Math.min(s1.len, s2.len); if (minL < 25/cameraScale) continue;
-                    let ab = angleBuckets.find(x => Math.abs(x.key - deg) < 2.0); if(!ab) { ab = {key: deg, items: []}; angleBuckets.push(ab); } ab.items.push({vs, s1, s2, rad: Math.min(25, minL * cameraScale * 0.4)});
+                    let ab = angleBuckets.find(x => Math.abs(x.key - deg) < 2.0); if(!ab) { ab = {key: deg, items: []}; angleBuckets.push(ab); } ab.items.push({vs, s1, s2});
                 }
             }
         });
-        if (filters.ang) { angleBuckets.forEach((b, idx) => { if(b.items.length > 1) { b.items.forEach(a => { ctx.beginPath(); ctx.strokeStyle = '#007AFF'; ctx.lineWidth=1.8; for(let i=0; i<Math.min(idx+1, 2); i++) ctx.arc(a.vs.x, a.vs.y, a.rad + i*5, a.s1.a, a.s2.a); ctx.stroke(); }); } }); }
+        if (filters.ang) { angleBuckets.forEach((b, idx) => { if(b.items.length > 1) { b.items.forEach(a => { 
+            const midA = (a.s1.a + a.s2.a)/2, rad = 30 * cameraScale;
+            ctx.beginPath(); ctx.strokeStyle = '#007AFF'; ctx.lineWidth=1.8; ctx.arc(a.vs.x, a.vs.y, rad, a.s1.a, a.s2.a); ctx.stroke();
+            for(let i=0; i<idx; i++) { 
+                const off = (i - (idx-1)/2)*6, ang = midA + off/rad;
+                ctx.beginPath(); ctx.moveTo(a.vs.x + Math.cos(ang)*(rad-6), a.vs.y + Math.sin(ang)*(rad-6));
+                ctx.lineTo(a.vs.x + Math.cos(ang)*(rad+6), a.vs.y + Math.sin(ang)*(rad+6)); ctx.stroke();
+            }
+        }); } }); }
         if (filters.inc) { points.forEach(p => { segments.forEach(s => { const d1 = getDist(s.p1, p), d2 = getDist(s.p2, p), dt = getDist(s.p1, s.p2); if(Math.abs(d1-d2) < 1.5 && Math.abs(d1+d2-dt) < 0.1) { const vs = worldToScreen(p.x, p.y); ctx.beginPath(); ctx.strokeStyle = '#AEAEB2'; ctx.lineWidth = 1.2; ctx.arc(vs.x, vs.y, 11, 0, Math.PI*2); ctx.stroke(); } }); }); }
         if (activePoint && dragPos) { const p1 = worldToScreen(activePoint.x, activePoint.y), p2 = worldToScreen(snapTarget?.x || dragPos.x, snapTarget?.y || dragPos.y); ctx.beginPath(); ctx.strokeStyle = 'rgba(0,122,255,0.4)'; if (currentTool === 'segment') { ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); } else { ctx.arc(p1.x, p1.y, getDist(p1, p2), 0, Math.PI * 2); } ctx.stroke(); }
         points.forEach(p => { const s = worldToScreen(p.x, p.y), g = ctx.createRadialGradient(s.x-2, s.y-2, 0, s.x, s.y, 6); g.addColorStop(0, '#efefef'); g.addColorStop(0.5, '#a8a8a8'); g.addColorStop(1, '#888'); ctx.beginPath(); ctx.fillStyle = (p === activePoint || (snapTarget && Math.abs(snapTarget.x - p.x) < 0.1)) ? '#007AFF' : g; ctx.arc(s.x, s.y, 5.5, 0, Math.PI * 2); ctx.fill(); if (p !== activePoint) { ctx.strokeStyle = 'rgba(0,0,0,0.1)'; ctx.stroke(); } });
