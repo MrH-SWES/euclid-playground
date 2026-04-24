@@ -7,23 +7,21 @@
   <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;600;800;900&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #F5F5F7; --surface: #FFFFFF; --text-main: #1D1D1F; --accent: #007AFF; --ones: #DC143C;
+      --bg: #F5F5F7; --surface: #FFFFFF; --text-main: #1D1D1F; --accent: #007AFF; --tens: #4169E1; --ones: #DC143C;
       --border: rgba(0,0,0,0.08); --shadow-soft: 0 4px 24px rgba(0,0,0,0.06);
-      --glass: rgba(255, 255, 255, 0.85);
+      --glass: rgba(255, 255, 255, 0.85); --incidence: #AEAEB2;
     }
     body { font-family: 'Lexend', sans-serif; background: var(--bg); color: var(--text-main); margin: 0; overflow: hidden; touch-action: none; }
     #logo-watermark { position: absolute; top: 24px; left: 24px; pointer-events: none; opacity: 0.9; font-weight: 900; font-size: 1.15rem; letter-spacing: -0.05em; display: flex; align-items: baseline; }
     .logo-bead { width: 5px; height: 5px; background: #a8a8a8; border-radius: 50%; margin-left: 2px; }
-    #toolbar { position: absolute; top: 72px; left: 24px; display: flex; flex-direction: column; gap: 10px; background: var(--glass); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); padding: 12px; border-radius: 20px; box-shadow: var(--shadow-soft); border: 1px solid var(--border); z-index: 100; }
-    button { background: white; border: 1px solid var(--border); border-radius: 14px; width: 56px; height: 56px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.25s cubic-bezier(0.34, 1.56, 0.64, 1); padding: 0; }
-    button svg { width: 34px; height: 34px; transition: 0.2s; stroke-width: 2.2; }
+    #toolbar { position: absolute; top: 72px; left: 24px; display: flex; flex-direction: column; gap: 10px; background: var(--glass); backdrop-filter: blur(24px); padding: 12px; border-radius: 20px; box-shadow: var(--shadow-soft); border: 1px solid var(--border); z-index: 100; }
+    button { background: white; border: 1px solid var(--border); border-radius: 14px; width: 56px; height: 56px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.25s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    button svg { width: 34px; height: 34px; stroke-width: 2.2; }
     button.active { background: var(--accent); border-color: var(--accent); transform: scale(1.08); }
     button.active svg { fill: white; stroke: white; }
     button.eraser.active { background: var(--ones); border-color: var(--ones); }
-    button.eraser svg { stroke: var(--text-main); fill: none; }
     button.eraser.active svg { stroke: white; }
-    button.danger svg { stroke: var(--ones); fill: none; stroke-width: 2.5; }
-    button:active { transform: scale(0.92); }
+    button.danger svg { fill: none; stroke: var(--ones); stroke-width: 2.5; }
     canvas { display: block; background: #fff; cursor: crosshair; }
     footer { position: absolute; bottom: 12px; left: 0; right: 0; text-align: center; font-size: 0.6rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #AEAEB2; pointer-events: none; opacity: 0.5; }
   </style>
@@ -33,7 +31,7 @@
 <div id="toolbar">
   <button id="btn-point" class="active" onclick="setTool('point')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5.5" fill="currentColor"/></svg></button>
   <button id="btn-segment" onclick="setTool('segment')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><line x1="19" y1="5" x2="5" y2="19"/></svg></button>
-  <button id="btn-circle" onclick="setTool('circle')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v2M12 4L7.5 21.5M12 4l4.5 17.5M10 15h4M12 11a1.2 1.2 0 1 0 0-2.4 1.2 1.2 0 0 0 0 2.4z"/><path d="M7.5 21.5L7 24h1l-0.5-2.5z" fill="currentColor" stroke="none"/><path d="M16.5 21.5L16 24h1l-0.5-2.5z" fill="currentColor" stroke="none"/></svg></button>
+  <button id="btn-circle" onclick="setTool('circle')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v2M12 4L7.5 21.5M12 4l4.5 17.5M10 15h4M12 11a1.2 1.2 0 1 0 0-2.4 1.2 1.2 0 0 0 0 2.4z"/><path d="M7.5 21.5L7 24h1l-0.5-2.5z" fill="currentColor"/><path d="M16.5 21.5L16 24h1l-0.5-2.5z" fill="currentColor"/></svg></button>
   <button id="btn-clear-guides" onclick="clearGuides()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-dasharray="3,3"><circle cx="12" cy="12" r="8"/><line x1="18" y1="6" x2="6" y2="18" stroke-dasharray="0" stroke-width="2.5"/></svg></button>
   <button id="btn-erase" class="eraser" onclick="setTool('erase')"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
   <button class="danger" onclick="clearAll()" style="margin-top: 10px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg></button>
@@ -56,11 +54,8 @@
         let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
         points.forEach(p => { minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x); minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y); });
         guides.forEach(g => { const r = getDist(g.p1, g.p2); minX = Math.min(minX, g.p1.x - r); maxX = Math.max(maxX, g.p1.x + r); minY = Math.min(minY, g.p1.y - r); maxY = Math.max(maxY, g.p1.y + r); });
-        const pad = 140, targetW = (maxX - minX) + pad*2, targetH = (maxY - minY) + pad*2;
-        const scale = Math.min(width / targetW, height / targetH, 1.1);
-        cameraScale += (scale - cameraScale) * 0.1;
-        cameraX += ((minX + maxX) / 2 - cameraX) * 0.1;
-        cameraY += ((minY + maxY) / 2 - cameraY) * 0.1;
+        const pad = 140, scale = Math.min(width / ((maxX - minX) + pad*2), height / ((maxY - minY) + pad*2), 1.1);
+        cameraScale += (scale - cameraScale) * 0.1; cameraX += ((minX + maxX) / 2 - cameraX) * 0.1; cameraY += ((minY + maxY) / 2 - cameraY) * 0.1;
     }
 
     function getIntersections() {
@@ -123,30 +118,31 @@
         getIntersections().forEach(pt => { const p = worldToScreen(pt.x, pt.y); ctx.beginPath(); ctx.strokeStyle = 'rgba(0,122,255,0.3)'; ctx.arc(p.x, p.y, 8, 0, Math.PI * 2); ctx.stroke(); });
         segments.forEach(s => { const p1 = worldToScreen(s.p1.x, s.p1.y), p2 = worldToScreen(s.p2.x, s.p2.y); ctx.beginPath(); ctx.strokeStyle = '#1d1d1f'; ctx.lineWidth = 2.8; ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke(); });
         
-        // CONGRUENCE TICK DETECTION
-        const lenGroups = {}; segments.forEach(s => { const l = Math.round(getDist(s.p1, s.p2)); if(l > 5) { if(!lenGroups[l]) lenGroups[l] = []; lenGroups[l].push(s); } });
-        let ts = 1; Object.keys(lenGroups).sort((a,b)=>a-b).forEach(k => { if(lenGroups[k].length > 1) { lenGroups[k].forEach(s => { const p1 = worldToScreen(s.p1.x, s.p1.y), p2 = worldToScreen(s.p2.x, s.p2.y), mx = (p1.x+p2.x)/2, my = (p1.y+p2.y)/2, ang = Math.atan2(p2.y-p1.y, p2.x-p1.x)+Math.PI/2; ctx.beginPath(); ctx.strokeStyle='#007AFF'; ctx.lineWidth=2.2; for(let i=0; i<ts; i++) { const off = (i-(ts-1)/2)*6, ox = Math.cos(ang-Math.PI/2)*off, oy = Math.sin(ang-Math.PI/2)*off; ctx.moveTo(mx+ox-Math.cos(ang)*8, my+oy-Math.sin(ang)*8); ctx.lineTo(mx+ox+Math.cos(ang)*8, my+oy+Math.sin(ang)*8); } ctx.stroke(); }); ts++; } });
+        // TOLERANCE BUCKET SYSTEM (Lengths)
+        const lenGroups = {}; segments.forEach(s => { const l = getDist(s.p1, s.p2); if(l < 5) return; let matched = false; for(let k in lenGroups) { if(Math.abs(k - l) < 2.0) { lenGroups[k].push(s); matched = true; break; } } if(!matched) lenGroups[l] = [s]; });
+        let ts = 1; Object.values(lenGroups).forEach(group => { if(group.length > 1) { group.forEach(s => { const p1 = worldToScreen(s.p1.x, s.p1.y), p2 = worldToScreen(s.p2.x, s.p2.y), mx = (p1.x+p2.x)/2, my = (p1.y+p2.y)/2, ang = Math.atan2(p2.y-p1.y, p2.x-p1.x)+Math.PI/2; ctx.beginPath(); ctx.strokeStyle='#007AFF'; ctx.lineWidth=2.2; for(let i=0; i<ts; i++) { const off = (i-(ts-1)/2)*6, ox = Math.cos(ang-Math.PI/2)*off, oy = Math.sin(ang-Math.PI/2)*off; ctx.moveTo(mx+ox-Math.cos(ang)*8, my+oy-Math.sin(ang)*8); ctx.lineTo(mx+ox+Math.cos(ang)*8, my+oy+Math.sin(ang)*8); } ctx.stroke(); }); ts++; } });
 
-        // PARALLEL DETECTION
-        const slopeGroups = {}; segments.forEach(s => { let sl = (s.p2.y - s.p1.y) / (s.p2.x - s.p1.x); if(Math.abs(sl) === Infinity) sl = 9999; sl = Math.round(sl * 100) / 100; if(!slopeGroups[sl]) slopeGroups[sl] = []; slopeGroups[sl].push(s); });
-        let ss = 1; Object.keys(slopeGroups).forEach(k => { if(slopeGroups[k].length > 1) { slopeGroups[k].forEach(s => { 
-            const p1 = worldToScreen(s.p1.x, s.p1.y), p2 = worldToScreen(s.p2.x, s.p2.y), mx = (p1.x+p2.x)/2, my = (p1.y+p2.y)/2, ang = Math.atan2(p2.y-p1.y, p2.x-p1.x); ctx.beginPath(); ctx.strokeStyle='#007AFF'; ctx.lineWidth=2;
-            for(let i=0; i<ss; i++) { const off = (i-(ss-1)/2)*8; const ox = mx + Math.cos(ang)*off, oy = my + Math.sin(ang)*off; ctx.moveTo(ox - Math.cos(ang+0.5)*10, oy - Math.sin(ang+0.5)*10); ctx.lineTo(ox, oy); ctx.lineTo(ox - Math.cos(ang-0.5)*10, oy - Math.sin(ang-0.5)*10); } ctx.stroke(); }); ss++; 
-        } });
+        // NORMALIZED PARALLELISM (Angles 0-180)
+        const slopeGroups = {}; segments.forEach(s => { let ang = Math.atan2(s.p2.y - s.p1.y, s.p2.x - s.p1.x) * 180 / Math.PI; if(ang < 0) ang += 180; if(ang >= 180) ang -= 180; let matched = false; for(let k in slopeGroups) { if(Math.abs(k - ang) < 1.5) { slopeGroups[k].push(s); matched = true; break; } } if(!matched) slopeGroups[ang] = [s]; });
+        let ss = 1; Object.values(slopeGroups).forEach(group => { if(group.length > 1) { group.forEach(s => { const p1 = worldToScreen(s.p1.x, s.p1.y), p2 = worldToScreen(s.p2.x, s.p2.y), mx = (p1.x+p2.x)/2, my = (p1.y+p2.y)/2, ang = Math.atan2(p2.y-p1.y, p2.x-p1.x); ctx.beginPath(); ctx.strokeStyle='#4169E1'; ctx.lineWidth=1.8; for(let i=0; i<ss; i++) { const off = (i-(ss-1)/2)*8; const ox = mx + Math.cos(ang)*off, oy = my + Math.sin(ang)*off; ctx.moveTo(ox - Math.cos(ang+0.5)*10, oy - Math.sin(ang+0.5)*10); ctx.lineTo(ox, oy); ctx.lineTo(ox - Math.cos(ang-0.5)*10, oy - Math.sin(ang-0.5)*10); } ctx.stroke(); }); ss++; } });
 
-        // ANGLE EQUIVALENCE DETECTION
+        // ANGLE EQUIVALENCE (Tolerance Buckets)
         const angleGroups = {}; points.forEach(v => {
-            const conn = segments.filter(s => s.p1 === v || s.p2 === v).map(s => { const p2 = s.p1 === v ? s.p2 : s.p1; return { p: worldToScreen(p2.x, p2.y), a: Math.atan2(worldToScreen(p2.x, p2.y).y - worldToScreen(v.x, v.y).y, worldToScreen(p2.x, p2.y).x - worldToScreen(v.x, v.y).x) }; }).sort((a,b) => a.a-b.a);
-            for(let i=0; i<conn.length; i++) { const s1 = conn[i], s2 = conn[(i+1)%conn.length]; let d = s2.a-s1.a; if(d<0) d+=Math.PI*2; if(d>Math.PI) continue; const deg = Math.round(d*180/Math.PI);
+            const conn = segments.filter(s => s.p1 === v || s.p2 === v).map(s => { const p2 = s.p1 === v ? s.p2 : s.p1; return { p: p2, a: Math.atan2(p2.y - v.y, p2.x - v.x) }; }).sort((a,b) => a.a-b.a);
+            for(let i=0; i<conn.length; i++) { const s1 = conn[i], s2 = conn[(i+1)%conn.length]; let d = s2.a-s1.a; if(d<0) d+=Math.PI*2; if(d>Math.PI) continue; const deg = d*180/Math.PI;
                 const vs = worldToScreen(v.x, v.y);
-                if(deg === 90) { const v1 = {x: s1.p.x-vs.x, y: s1.p.y-vs.y}, v2 = {x: s2.p.x-vs.x, y: s2.p.y-vs.y}, m1 = Math.sqrt(v1.x**2+v1.y**2), m2 = Math.sqrt(v2.x**2+v2.y**2), u1 = {x: v1.x/m1*18, y: v1.y/m1*18}, u2 = {x: v2.x/m2*18, y: v2.y/m2*18}; ctx.beginPath(); ctx.strokeStyle='#007AFF'; ctx.lineWidth=1.8; ctx.moveTo(vs.x+u1.x, vs.y+u1.y); ctx.lineTo(vs.x+u1.x+u2.x, vs.y+u1.y+u2.y); ctx.lineTo(vs.x+u2.x, vs.y+u2.y); ctx.stroke(); }
-                else if(deg > 5 && deg < 175) { if(!angleGroups[deg]) angleGroups[deg] = []; angleGroups[deg].push({vs, s1, s2}); }
+                if(Math.abs(deg-90) < 1.5) { 
+                    // COMPOUND DETECTION: Perpendicular Bisector
+                    let isPerpBisector = segments.some(s => { const dt = getDist(s.p1, s.p2), d1 = getDist(s.p1, v), d2 = getDist(s.p2, v); return Math.abs(d1-d2) < 1.0 && Math.abs(d1+d2-dt) < 0.1; });
+                    const v1 = {x: Math.cos(s1.a), y: Math.sin(s1.a)}, v2 = {x: Math.cos(s2.a), y: Math.sin(s2.a)};
+                    ctx.beginPath(); ctx.strokeStyle='#007AFF'; ctx.lineWidth = isPerpBisector ? 3.5 : 1.8; ctx.moveTo(vs.x+v1.x*18, vs.y+v1.y*18); ctx.lineTo(vs.x+v1.x*18+v2.x*18, vs.y+v1.y*18+v2.y*18); ctx.lineTo(vs.x+v2.x*18, vs.y+v2.y*18); ctx.stroke(); 
+                } else if(deg > 5 && deg < 175) { let matched = false; for(let k in angleGroups) { if(Math.abs(k - deg) < 2.0) { angleGroups[k].push({vs, s1, s2}); matched = true; break; } } if(!matched) angleGroups[deg] = [{vs, s1, s2}]; }
             }
         });
-        let as = 1; Object.keys(angleGroups).forEach(k => { if(angleGroups[k].length > 1) { angleGroups[k].forEach(a => { ctx.beginPath(); ctx.strokeStyle='#007AFF'; ctx.lineWidth=1.8; for(let i=0; i<as; i++) { ctx.arc(a.vs.x, a.vs.y, 25 + i*5, a.s1.a, a.s2.a); } ctx.stroke(); }); as++; } else { angleGroups[k].forEach(a => { ctx.beginPath(); ctx.strokeStyle='rgba(0,122,255,0.3)'; ctx.lineWidth=1.5; ctx.arc(a.vs.x, a.vs.y, 25, a.s1.a, a.s2.a); ctx.stroke(); }); } });
+        let as = 1; Object.values(angleGroups).forEach(group => { if(group.length > 1) { group.forEach(a => { ctx.beginPath(); ctx.strokeStyle='#007AFF'; ctx.lineWidth=1.8; for(let i=0; i<as; i++) ctx.arc(a.vs.x, a.vs.y, 25 + i*5, a.s1.a, a.s2.a); ctx.stroke(); }); as++; } else group.forEach(a => { ctx.beginPath(); ctx.strokeStyle='rgba(0,122,255,0.2)'; ctx.arc(a.vs.x, a.vs.y, 25, a.s1.a, a.s2.a); ctx.stroke(); }); });
 
-        // MIDPOINT RECOGNITION (HALO)
-        points.forEach(p => { segments.forEach(s => { const d1 = getDist(s.p1, p), d2 = getDist(s.p2, p), dt = getDist(s.p1, s.p2); if(Math.abs(d1-d2) < 1.0 && Math.abs(d1+d2-dt) < 0.1) { const vs = worldToScreen(p.x, p.y); ctx.beginPath(); ctx.strokeStyle = '#007AFF'; ctx.lineWidth = 1.5; ctx.arc(vs.x, vs.y, 10, 0, Math.PI*2); ctx.stroke(); } }); });
+        // MIDPOINT (Halo)
+        points.forEach(p => { segments.forEach(s => { const d1 = getDist(s.p1, p), d2 = getDist(s.p2, p), dt = getDist(s.p1, s.p2); if(Math.abs(d1-d2) < 1.5 && Math.abs(d1+d2-dt) < 0.1) { const vs = worldToScreen(p.x, p.y); ctx.beginPath(); ctx.strokeStyle = '#AEAEB2'; ctx.lineWidth = 1.2; ctx.arc(vs.x, vs.y, 11, 0, Math.PI*2); ctx.stroke(); } }); });
 
         if (activePoint && dragPos) { const p1 = worldToScreen(activePoint.x, activePoint.y), p2 = worldToScreen(snapTarget?.x || dragPos.x, snapTarget?.y || dragPos.y); ctx.beginPath(); ctx.strokeStyle = 'rgba(0,122,255,0.4)'; if (currentTool === 'segment') { ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); } else { ctx.arc(p1.x, p1.y, getDist(p1, p2), 0, Math.PI * 2); } ctx.stroke(); }
         points.forEach(p => { const s = worldToScreen(p.x, p.y), g = ctx.createRadialGradient(s.x-2, s.y-2, 0, s.x, s.y, 6); g.addColorStop(0, '#efefef'); g.addColorStop(0.5, '#a8a8a8'); g.addColorStop(1, '#888'); ctx.beginPath(); ctx.fillStyle = (p === activePoint || (snapTarget && Math.abs(snapTarget.x - p.x) < 0.1)) ? '#007AFF' : g; ctx.arc(s.x, s.y, 5.5, 0, Math.PI * 2); ctx.fill(); if (p !== activePoint) { ctx.strokeStyle = 'rgba(0,0,0,0.1)'; ctx.stroke(); } });
