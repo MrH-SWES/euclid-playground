@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>Math Things. | Here's Lookin' at Eu, Clid</title>
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;600;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #F5F5F7; --surface: #FFFFFF; --text-main: #1D1D1F; --accent: #007AFF; --ones: #DC143C;
+      --border: rgba(0,0,0,0.08); --shadow-soft: 0 2px 20px rgba(0,0,0,0.04);
+    }
+    body { font-family: 'Lexend', sans-serif; background: var(--bg); color: var(--text-main); margin: 0; overflow: hidden; touch-action: none; }
+    header { position: absolute; top: 0; left: 0; right: 0; height: 60px; background: rgba(255,255,255,0.85); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); padding: 0 24px; display: flex; align-items: center; justify-content: space-between; z-index: 100; }
+    .logo { font-weight: 900; font-size: 1.2rem; letter-spacing: -0.05em; display: flex; align-items: baseline; }
+    .logo-bead { width: 6px; height: 6px; background: #a8a8a8; border-radius: 50%; margin-left: 2px; }
+    nav { display: flex; gap: 8px; }
+    button { background: white; border: 1px solid var(--border); border-radius: 8px; padding: 6px 14px; font-family: 'Lexend'; font-weight: 600; font-size: 0.75rem; cursor: pointer; transition: 0.2s; box-shadow: var(--shadow-soft); }
+    button.active { background: var(--accent); color: white; border-color: var(--accent); }
+    button.eraser.active { background: var(--ones); color: white; border-color: var(--ones); }
+    button.danger { color: #DC143C; }
+    canvas { display: block; background: #fff; cursor: crosshair; }
+    footer { position: absolute; bottom: 12px; left: 0; right: 0; text-align: center; font-size: 0.6rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #AEAEB2; pointer-events: none; }
+  </style>
+</head>
+<body>
+<header>
+  <div class="logo">Math Things<span class="logo-bead"></span></div>
+  <nav>
+    <button id="btn-point" class="active" onclick="setTool('point')">● Point</button>
+    <button id="btn-segment" onclick="setTool('segment')">/ Segment</button>
+    <button id="btn-circle" onclick="setTool('circle')">○ Compass</button>
+    <button id="btn-erase" class="eraser" onclick="setTool('erase')">✕ Remove</button>
+    <button class="danger" style="margin-left:12px" onclick="clearAll()">Reset</button>
+  </nav>
+</header>
+<canvas id="canvas"></canvas>
+<footer>Math Things. | Math, in your hands.</footer>
+<script>
+    const canvas = document.getElementById('canvas'), ctx = canvas.getContext('2d');
+    let width, height, midY, lastMidY;
+    let points = [], segments = [], guides = []; 
+    let currentTool = 'point', activePoint = null, dragPos = null, snapTarget = null;
+
+    function resize() {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+        midY = height / 2;
+        if (lastMidY !== undefined) { const dy = midY - lastMidY; points.forEach(p => p.y += dy); }
+        lastMidY = midY; draw();
+    }
+
+    function setTool(tool) {
+        currentTool = tool;
+        document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+        document.getElementById('btn-' + tool).classList.add('active');
+    }
+
+    function getDist(p1, p2) { return Math.sqrt((p1.x - p2.x)**2 + (p1.y - p2.y)**2); }
+
+    function getIntersections() {
+        const inters = [];
+        guides.forEach((c1, i) => {
+            guides.slice(i + 1).forEach(c2 => {
+                const d = getDist(c1.p1, c2.p1), r1 = getDist(c1.p1, c1.p2), r2 = getDist(c2.p1, c2.p2);
+                if (d > r1 + r2 || d < Math.abs(r1 - r2) || d === 0) return;
+                const a = (r1**2 - r2**2 + d**2) / (2 * d), h = Math.sqrt(r1**2 - a**2);
+                const x2 = c1.p1.x + a * (c2.p1.x - c1.p1.x) / d, y2 = c1.p1.y + a * (c2.p1.y - c1.p1.y) / d;
+                inters.push({x: x2 + h * (c2.p1.y - c1.p1.y) / d, y: y2 - h * (c2.p1.x - c1.p1.x) / d});
+                inters.push({x: x2 - h * (c2.p1.y - c1.p1.y) / d, y: y2 + h * (c2.p1.x - c1.p1.x) / d});
+            });
+        });
+        segments.forEach((s1, i) => {
+            segments.slice(i + 1).forEach(s2 => {
+                const x1 = s1.p1.x, y1 = s1.p1.y, x2 = s1.p2.x, y2 = s1.p2.y, x3 = s2.p1.x, y3 = s2.p1.y, x4 = s2.p2.x, y4 = s2.p2.y;
+                const den = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+                if (den === 0) return;
+                const t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / den, u = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / den;
+                if (t >= 0 && t <= 1 && u >= 0 && u <= 1) inters.push({x: x1 + t * (x2 - x1), y: y1 + t * (y2 - y1)});
+            });
+            guides.forEach(g => {
+                const r = getDist(g.p1, g.p2), dx = s1.p2.x - s1.p1.x, dy = s1.p2.y - s1.p1.y, fx = s1.p1.x - g.p1.x, fy = s1.p1.y - g.p1.y;
+                const a = dx*dx + dy*dy, b = 2*(fx*dx + fy*dy), c = (fx*fx + fy*fy) - r*r;
+                let disc = b*b - 4*a*c;
+                if (disc >= 0) { disc = Math.sqrt(disc); const t1 = (-b - disc)/(2*a), t2 = (-b + disc)/(2*a); if (t1 >= 0 && t1 <= 1) inters.push({x: s1.p1.x + t1*dx, y: s1.p1.y + t1*dy}); if (t2 >= 0 && t2 <= 1) inters.push({x: s1.p1.x + t2*dx, y: s1.p1.y + t2*dy}); }
+            });
+        });
+        return inters;
+    }
+
+    function findSnap(x, y) {
+        if (Math.abs(y - midY) < 30) y = midY;
+        const all = [...points, ...getIntersections()];
+        let p = all.find(pt => getDist(pt, {x, y}) < 25);
+        return p ? {x: p.x, y: p.y} : {x, y, isNew: true};
+    }
+
+    function addSplitSegment(p1, p2) {
+        const ptsOn = points.filter(p => { if (p === p1 || p === p2) return false; const d1 = getDist(p1, p), d2 = getDist(p2, p), dTot = getDist(p1, p2); return Math.abs(d1 + d2 - dTot) < 0.5; }).sort((a, b) => getDist(p1, a) - getDist(p1, b));
+        let current = p1; ptsOn.forEach(p => { segments.push({p1: current, p2: p}); current = p; });
+        segments.push({p1: current, p2: p2});
+    }
+
+    function ensurePoint(snap) {
+        let p = points.find(pt => Math.abs(pt.x - snap.x) < 1 && Math.abs(pt.y - snap.y) < 1);
+        if (!p) {
+            p = {x: snap.x, y: snap.y}; points.push(p);
+            const toAdd = [];
+            segments.forEach((s, idx) => { const d1 = getDist(s.p1, p), d2 = getDist(s.p2, p), dTot = getDist(s.p1, s.p2); if (Math.abs(d1 + d2 - dTot) < 0.5 && d1 > 2 && d2 > 2) { segments[idx] = null; toAdd.push({p1: s.p1, p2: p}, {p1: p, p2: s.p2}); } });
+            segments = segments.filter(s => s !== null).concat(toAdd);
+        }
+        return p;
+    }
+
+    function performErase(x, y) {
+        const pointIdx = points.findIndex(p => getDist(p, {x, y}) < 20);
+        if (pointIdx !== -1) { const p = points[pointIdx]; segments = segments.filter(s => s.p1 !== p && s.p2 !== p); guides = guides.filter(g => g.p1 !== p && g.p2 !== p); points.splice(pointIdx, 1); return; }
+        const segmentIdx = segments.findIndex(s => { const d1 = getDist(s.p1, {x, y}), d2 = getDist(s.p2, {x, y}), dt = getDist(s.p1, s.p2); return Math.abs(d1 + d2 - dt) < 1.5; });
+        if (segmentIdx !== -1) { segments.splice(segmentIdx, 1); return; }
+        const guideIdx = guides.findIndex(g => { const d = getDist(g.p1, {x, y}), r = getDist(g.p1, g.p2); return Math.abs(d - r) < 5.0; });
+        if (guideIdx !== -1) { guides.splice(guideIdx, 1); }
+    }
+
+    canvas.addEventListener('pointerdown', e => { const x = e.clientX, y = e.clientY; if (currentTool === 'erase') { performErase(x, y); draw(); return; } const snap = findSnap(x, y); if (currentTool === 'point') { ensurePoint(snap); } else { activePoint = ensurePoint(snap); dragPos = {x, y}; } draw(); });
+    canvas.addEventListener('pointermove', e => { if (!activePoint) return; dragPos = {x: e.clientX, y: e.clientY}; snapTarget = findSnap(dragPos.x, dragPos.y); draw(); });
+    canvas.addEventListener('pointerup', e => { if (activePoint && dragPos) { const endSnap = findSnap(dragPos.x, dragPos.y); const finalPoint = ensurePoint(endSnap); if (finalPoint !== activePoint) { if (currentTool === 'segment') addSplitSegment(activePoint, finalPoint); if (currentTool === 'circle') guides.push({p1: activePoint, p2: finalPoint}); } } activePoint = null; dragPos = null; snapTarget = null; draw(); });
+
+    function clearAll() { points = []; segments = []; guides = []; draw(); }
+
+    function drawConstraints() {
+        const lenGroups = {};
+        segments.forEach(s => { const len = Math.round(getDist(s.p1, s.p2)); if (len < 5) return; if (!lenGroups[len]) lenGroups[len] = []; lenGroups[len].push(s); });
+        let tickSet = 1;
+        const sortedLenKeys = Object.keys(lenGroups).sort((a,b) => a-b);
+        sortedLenKeys.forEach(lenKey => { const group = lenGroups[lenKey]; if (group.length > 1) { group.forEach(s => { const mx = (s.p1.x + s.p2.x) / 2, my = (s.p1.y + s.p2.y) / 2, angle = Math.atan2(s.p2.y - s.p1.y, s.p2.x - s.p1.x) + Math.PI/2; ctx.beginPath(); ctx.strokeStyle = '#007AFF'; ctx.lineWidth = 2; for(let i=0; i<tickSet; i++) { const offset = (i - (tickSet-1)/2) * 6; const ox = Math.cos(angle - Math.PI/2) * offset, oy = Math.sin(angle - Math.PI/2) * offset; ctx.moveTo(mx + ox - Math.cos(angle)*8, my + oy - Math.sin(angle)*8); ctx.lineTo(mx + ox + Math.cos(angle)*8, my + oy + Math.sin(angle)*8); } ctx.stroke(); }); tickSet++; } });
+
+        const angleGroups = {};
+        points.forEach(vertex => {
+            const connected = segments.filter(s => s.p1 === vertex || s.p2 === vertex).map(s => { const p2 = s.p1 === vertex ? s.p2 : s.p1; return { p: p2, angle: Math.atan2(p2.y - vertex.y, p2.x - vertex.x) }; }).sort((a, b) => a.angle - b.angle);
+            for (let i = 0; i < connected.length; i++) {
+                const s1 = connected[i], s2 = connected[(i + 1) % connected.length];
+                let diff = s2.angle - s1.angle; if (diff < 0) diff += Math.PI * 2; if (diff > Math.PI) continue; // Only measure interior angles
+                const deg = Math.round(diff * 180 / Math.PI);
+                if (deg > 5 && deg < 175) {
+                    if (deg === 90) { // Right angle square
+                        const v1 = {x: (s1.p.x - vertex.x), y: (s1.p.y - vertex.y)}, v2 = {x: (s2.p.x - vertex.x), y: (s2.p.y - vertex.y)};
+                        const mag1 = Math.sqrt(v1.x**2+v1.y**2), mag2 = Math.sqrt(v2.x**2+v2.y**2);
+                        const u1 = {x: v1.x/mag1*20, y: v1.y/mag1*20}, u2 = {x: v2.x/mag2*20, y: v2.y/mag2*20};
+                        ctx.beginPath(); ctx.strokeStyle = '#007AFF'; ctx.lineWidth = 1.5; ctx.moveTo(vertex.x + u1.x, vertex.y + u1.y); ctx.lineTo(vertex.x + u1.x + u2.x, vertex.y + u1.y + u2.y); ctx.lineTo(vertex.x + u2.x, vertex.y + u2.y); ctx.stroke();
+                    } else {
+                        if (!angleGroups[deg]) angleGroups[deg] = [];
+                        angleGroups[deg].push({vertex, start: s1.angle, end: s2.angle});
+                    }
+                }
+            }
+        });
+        let arcSet = 1;
+        Object.values(angleGroups).forEach(group => { if (group.length > 1) { group.forEach(a => { ctx.beginPath(); ctx.strokeStyle = '#007AFF'; ctx.lineWidth = 1.5; ctx.arc(a.vertex.x, a.vertex.y, 25 + (arcSet-1)*5, a.start, a.end); ctx.stroke(); }); arcSet++; } });
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, width, height);
+        ctx.beginPath(); ctx.strokeStyle = '#d1d1d6'; ctx.lineWidth = 1.5; ctx.moveTo(0, midY); ctx.lineTo(width, midY); ctx.stroke();
+        guides.forEach(g => { ctx.beginPath(); ctx.strokeStyle = '#d0d0d0'; ctx.setLineDash([4, 4]); ctx.arc(g.p1.x, g.p1.y, getDist(g.p1, g.p2), 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]); });
+        getIntersections().forEach(pt => { ctx.beginPath(); ctx.strokeStyle = 'rgba(0,122,255,0.3)'; ctx.arc(pt.x, pt.y, 8, 0, Math.PI * 2); ctx.stroke(); });
+        segments.forEach(s => { ctx.beginPath(); ctx.strokeStyle = '#1d1d1f'; ctx.lineWidth = 2.5; ctx.moveTo(s.p1.x, s.p1.y); ctx.lineTo(s.p2.x, s.p2.y); ctx.stroke(); });
+        drawConstraints();
+        if (activePoint && dragPos) { ctx.beginPath(); ctx.strokeStyle = 'rgba(0,122,255,0.4)'; const end = snapTarget || {x: dragPos.x, y: dragPos.y}; if (currentTool === 'segment') { ctx.moveTo(activePoint.x, activePoint.y); ctx.lineTo(end.x, end.y); } else { ctx.arc(activePoint.x, activePoint.y, getDist(activePoint, end), 0, Math.PI * 2); } ctx.stroke(); }
+        points.forEach(p => { ctx.beginPath(); const grad = ctx.createRadialGradient(p.x-2, p.y-2, 0, p.x, p.y, 6); grad.addColorStop(0, '#efefef'); grad.addColorStop(0.5, '#a8a8a8'); grad.addColorStop(1, '#888'); ctx.fillStyle = (p === activePoint || (snapTarget && Math.abs(snapTarget.x - p.x) < 1 && Math.abs(snapTarget.y - p.y) < 1)) ? '#007AFF' : grad; ctx.arc(p.x, p.y, 5.5, 0, Math.PI * 2); ctx.fill(); if (p !== activePoint) { ctx.strokeStyle = 'rgba(0,0,0,0.1)'; ctx.stroke(); } });
+    }
+    window.addEventListener('resize', resize); resize();
+</script>
+</body>
+</html>
