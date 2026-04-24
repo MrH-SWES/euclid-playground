@@ -3,43 +3,65 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-  <title>Math Things. | Here's Lookin' at Eu, Clid</title>
+  <title>Math Things. | Euclid's Playground</title>
   <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;600;800;900&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg: #F5F5F7; --surface: #FFFFFF; --text-main: #1D1D1F; --accent: #007AFF; --ones: #DC143C;
-      --border: rgba(0,0,0,0.08); --shadow-soft: 0 2px 20px rgba(0,0,0,0.04);
+      --border: rgba(0,0,0,0.08); --shadow-soft: 0 4px 24px rgba(0,0,0,0.06);
+      --glass: rgba(255, 255, 255, 0.8);
     }
     body { font-family: 'Lexend', sans-serif; background: var(--bg); color: var(--text-main); margin: 0; overflow: hidden; touch-action: none; }
-    header { position: absolute; top: 0; left: 0; right: 0; height: 60px; background: rgba(255,255,255,0.85); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); padding: 0 24px; display: flex; align-items: center; justify-content: space-between; z-index: 100; }
-    .logo { font-weight: 900; font-size: 1.2rem; letter-spacing: -0.05em; display: flex; align-items: baseline; }
-    .logo-bead { width: 6px; height: 6px; background: #a8a8a8; border-radius: 50%; margin-left: 2px; }
-    nav { display: flex; gap: 8px; }
-    button { background: white; border: 1px solid var(--border); border-radius: 8px; padding: 6px 14px; font-family: 'Lexend'; font-weight: 600; font-size: 0.75rem; cursor: pointer; transition: 0.2s; box-shadow: var(--shadow-soft); }
-    button.active { background: var(--accent); color: white; border-color: var(--accent); }
+    
+    #logo-watermark {
+      position: absolute; top: 20px; left: 24px; pointer-events: none; opacity: 0.8;
+      font-weight: 900; font-size: 1.1rem; letter-spacing: -0.05em; display: flex; align-items: baseline;
+    }
+    .logo-bead { width: 5px; height: 5px; background: #a8a8a8; border-radius: 50%; margin-left: 2px; }
+
+    #toolbar { 
+      position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
+      display: flex; gap: 8px; background: var(--glass); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      padding: 8px; border-radius: 14px; box-shadow: var(--shadow-soft); border: 1px solid var(--border); z-index: 100;
+    }
+    button { 
+      background: white; border: 1px solid var(--border); border-radius: 10px; 
+      padding: 10px 16px; font-family: 'Lexend'; font-weight: 600; font-size: 0.8rem; 
+      cursor: pointer; transition: 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    button.active { background: var(--accent); color: white; border-color: var(--accent); transform: scale(1.05); }
     button.eraser.active { background: var(--ones); color: white; border-color: var(--ones); }
-    button.danger { color: #DC143C; }
+    button.danger { color: var(--ones); }
+    button:active { transform: scale(0.95); }
+
     canvas { display: block; background: #fff; cursor: crosshair; }
-    footer { position: absolute; bottom: 12px; left: 0; right: 0; text-align: center; font-size: 0.6rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #AEAEB2; pointer-events: none; }
+    
+    footer { 
+      position: absolute; bottom: 12px; left: 0; right: 0; text-align: center; 
+      font-size: 0.6rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #AEAEB2; 
+      pointer-events: none; opacity: 0.5;
+    }
   </style>
 </head>
 <body>
-<header>
-  <div class="logo">Math Things<span class="logo-bead"></span></div>
-  <nav>
-    <button id="btn-point" class="active" onclick="setTool('point')">● Point</button>
-    <button id="btn-segment" onclick="setTool('segment')">/ Segment</button>
-    <button id="btn-circle" onclick="setTool('circle')">○ Compass</button>
-    <button id="btn-erase" class="eraser" onclick="setTool('erase')">✕ Remove</button>
-    <button class="danger" style="margin-left:12px" onclick="clearAll()">Reset</button>
-  </nav>
-</header>
+
+<div id="logo-watermark">Math Things<span class="logo-bead"></span></div>
+
+<div id="toolbar">
+  <button id="btn-point" class="active" onclick="setTool('point')">● Point</button>
+  <button id="btn-segment" onclick="setTool('segment')">/ Segment</button>
+  <button id="btn-circle" onclick="setTool('circle')">○ Compass</button>
+  <button id="btn-erase" class="eraser" onclick="setTool('erase')">✕ Remove</button>
+  <button class="danger" style="margin-left:8px" onclick="clearAll()">Reset</button>
+</div>
+
 <canvas id="canvas"></canvas>
+
 <footer>Math Things. | Math, in your hands.</footer>
+
 <script>
     const canvas = document.getElementById('canvas'), ctx = canvas.getContext('2d');
-    let width, height, midY, lastMidY;
-    let points = [], segments = [], guides = []; 
+    let width, height, midY, lastMidY, points = [], segments = [], guides = []; 
     let currentTool = 'point', activePoint = null, dragPos = null, snapTarget = null;
 
     function resize() {
@@ -52,7 +74,7 @@
 
     function setTool(tool) {
         currentTool = tool;
-        document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('#toolbar button').forEach(b => b.classList.remove('active'));
         document.getElementById('btn-' + tool).classList.add('active');
     }
 
@@ -116,25 +138,18 @@
         const pointIdx = points.findIndex(p => getDist(p, {x, y}) < 20);
         if (pointIdx !== -1) {
             const p = points[pointIdx];
-            // FIND HEALING CANDIDATES
             const connected = segments.filter(s => s.p1 === p || s.p2 === p);
             if (connected.length === 2) {
-                const s1 = connected[0], s2 = connected[1];
-                const pA = s1.p1 === p ? s1.p2 : s1.p1;
-                const pB = s2.p1 === p ? s2.p2 : s2.p1;
-                const d1 = getDist(pA, p), d2 = getDist(pB, p), dTot = getDist(pA, pB);
-                if (Math.abs(d1 + d2 - dTot) < 1.0) { // Collinear healing
-                    segments.push({p1: pA, p2: pB});
-                }
+                const s1 = connected[0], s2 = connected[1], pA = s1.p1 === p ? s1.p2 : s1.p1, pB = s2.p1 === p ? s2.p2 : s2.p1;
+                if (Math.abs(getDist(pA, p) + getDist(pB, p) - getDist(pA, pB)) < 1.0) segments.push({p1: pA, p2: pB});
             }
             segments = segments.filter(s => s.p1 !== p && s.p2 !== p);
             guides = guides.filter(g => g.p1 !== p && g.p2 !== p);
-            points.splice(pointIdx, 1);
-            return;
+            points.splice(pointIdx, 1); return;
         }
-        const segmentIdx = segments.findIndex(s => { const d1 = getDist(s.p1, {x, y}), d2 = getDist(s.p2, {x, y}), dt = getDist(s.p1, s.p2); return Math.abs(d1 + d2 - dt) < 1.5; });
+        const segmentIdx = segments.findIndex(s => Math.abs(getDist(s.p1, {x, y}) + getDist(s.p2, {x, y}) - getDist(s.p1, s.p2)) < 1.5);
         if (segmentIdx !== -1) { segments.splice(segmentIdx, 1); return; }
-        const guideIdx = guides.findIndex(g => { const d = getDist(g.p1, {x, y}), r = getDist(g.p1, g.p2); return Math.abs(d - r) < 5.0; });
+        const guideIdx = guides.findIndex(g => Math.abs(getDist(g.p1, {x, y}) - getDist(g.p1, g.p2)) < 5.0);
         if (guideIdx !== -1) { guides.splice(guideIdx, 1); }
     }
 
@@ -148,8 +163,7 @@
         const lenGroups = {};
         segments.forEach(s => { const len = Math.round(getDist(s.p1, s.p2)); if (len < 5) return; if (!lenGroups[len]) lenGroups[len] = []; lenGroups[len].push(s); });
         let tickSet = 1;
-        const sortedLenKeys = Object.keys(lenGroups).sort((a,b) => a-b);
-        sortedLenKeys.forEach(lenKey => { const group = lenGroups[lenKey]; if (group.length > 1) { group.forEach(s => { const mx = (s.p1.x + s.p2.x) / 2, my = (s.p1.y + s.p2.y) / 2, angle = Math.atan2(s.p2.y - s.p1.y, s.p2.x - s.p1.x) + Math.PI/2; ctx.beginPath(); ctx.strokeStyle = '#007AFF'; ctx.lineWidth = 2; for(let i=0; i<tickSet; i++) { const offset = (i - (tickSet-1)/2) * 6; const ox = Math.cos(angle - Math.PI/2) * offset, oy = Math.sin(angle - Math.PI/2) * offset; ctx.moveTo(mx + ox - Math.cos(angle)*8, my + oy - Math.sin(angle)*8); ctx.lineTo(mx + ox + Math.cos(angle)*8, my + oy + Math.sin(angle)*8); } ctx.stroke(); }); tickSet++; } });
+        Object.keys(lenGroups).sort((a,b)=>a-b).forEach(lenKey => { const group = lenGroups[lenKey]; if (group.length > 1) { group.forEach(s => { const mx = (s.p1.x + s.p2.x) / 2, my = (s.p1.y + s.p2.y) / 2, angle = Math.atan2(s.p2.y - s.p1.y, s.p2.x - s.p1.x) + Math.PI/2; ctx.beginPath(); ctx.strokeStyle = '#007AFF'; ctx.lineWidth = 2; for(let i=0; i<tickSet; i++) { const offset = (i - (tickSet-1)/2) * 6; const ox = Math.cos(angle - Math.PI/2) * offset, oy = Math.sin(angle - Math.PI/2) * offset; ctx.moveTo(mx + ox - Math.cos(angle)*8, my + oy - Math.sin(angle)*8); ctx.lineTo(mx + ox + Math.cos(angle)*8, my + oy + Math.sin(angle)*8); } ctx.stroke(); }); tickSet++; } });
 
         const angleGroups = {};
         points.forEach(vertex => {
@@ -163,10 +177,7 @@
                         const v1 = {x: (s1.p.x - vertex.x), y: (s1.p.y - vertex.y)}, v2 = {x: (s2.p.x - vertex.x), y: (s2.p.y - vertex.y)};
                         const u1 = {x: v1.x/Math.sqrt(v1.x**2+v1.y**2)*18, y: v1.y/Math.sqrt(v1.x**2+v1.y**2)*18}, u2 = {x: v2.x/Math.sqrt(v2.x**2+v2.y**2)*18, y: v2.y/Math.sqrt(v2.x**2+v2.y**2)*18};
                         ctx.beginPath(); ctx.strokeStyle = '#007AFF'; ctx.lineWidth = 1.5; ctx.moveTo(vertex.x + u1.x, vertex.y + u1.y); ctx.lineTo(vertex.x + u1.x + u2.x, vertex.y + u1.y + u2.y); ctx.lineTo(vertex.x + u2.x, vertex.y + u2.y); ctx.stroke();
-                    } else {
-                        if (!angleGroups[deg]) angleGroups[deg] = [];
-                        angleGroups[deg].push({vertex, start: s1.angle, end: s2.angle});
-                    }
+                    } else { if (!angleGroups[deg]) angleGroups[deg] = []; angleGroups[deg].push({vertex, start: s1.angle, end: s2.angle}); }
                 }
             }
         });
