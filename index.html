@@ -7,163 +7,195 @@
   <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;600;800;900&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #F5F5F7; --surface: #FFFFFF; --text-main: #1D1D1F; --accent: #007AFF; --hundreds: #FFD700; --ones: #DC143C;
-      --border: rgba(0,0,0,0.08); --shadow-soft: 0 4px 24px rgba(0,0,0,0.06);
-      --glass: rgba(255, 255, 255, 0.85); --incidence: #AEAEB2;
+      --bg: #F5F5F7; --surface: #FFFFFF; --text-main: #1D1D1F; --accent: #007AFF; --ones: #DC143C;
+      --glass: rgba(255,255,255,0.8); --border: rgba(0,0,0,0.08); 
+      --shadow-soft: 0 4px 20px rgba(0,0,0,0.08);
     }
     body { font-family: 'Lexend', sans-serif; background: var(--bg); color: var(--text-main); margin: 0; overflow: hidden; touch-action: none; }
-    #logo-watermark { position: absolute; top: 24px; left: 24px; pointer-events: none; opacity: 0.9; font-weight: 900; font-size: 1.15rem; letter-spacing: -0.05em; display: flex; align-items: baseline; }
-    .logo-bead { width: 5px; height: 5px; background: #a8a8a8; border-radius: 50%; margin-left: 2px; }
-    .island { position: absolute; display: flex; flex-direction: column; gap: 10px; background: var(--glass); backdrop-filter: blur(24px); padding: 12px; border-radius: 20px; box-shadow: var(--shadow-soft); border: 1px solid var(--border); z-index: 100; }
-    #toolbar { top: 72px; left: 24px; }
-    #filter-dock { top: 72px; right: 24px; }
-    button { background: white; border: 1px solid var(--border); border-radius: 14px; width: 56px; height: 56px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); outline: none; }
-    button svg { width: 34px; height: 34px; stroke-width: 2.2; pointer-events: none; }
-    #toolbar button.active { background: var(--accent); border-color: var(--accent); transform: scale(1.08); }
-    #toolbar button.active svg { fill: white; stroke: white; }
-    #toolbar button.eraser.active { background: var(--ones); border-color: var(--ones); }
-    #toolbar button.eraser.active svg { stroke: white; }
-    #toolbar button.danger svg { fill: none; stroke: var(--ones); stroke-width: 2.8; }
-    .filter-btn.active.len { background: var(--ones); border-color: var(--ones); }
-    .filter-btn.active.ang { background: var(--accent); border-color: var(--accent); }
-    .filter-btn.active.par { background: var(--hundreds); border-color: var(--hundreds); }
-    .filter-btn.active.inc { background: var(--incidence); border-color: var(--incidence); }
-    .filter-btn.active svg { stroke: white; fill: white; }
-    .filter-btn:not(.active) svg { opacity: 0.4; }
+    
+    header { 
+        position: absolute; top: 12px; left: 12px; padding: 8px 16px; background: var(--glass); 
+        backdrop-filter: blur(20px); border-radius: 12px; border: 1px solid var(--border); 
+        display: flex; align-items: center; z-index: 100; pointer-events: none;
+    }
+    .logo { font-weight: 900; font-size: 1rem; letter-spacing: -0.05em; display: flex; align-items: baseline; opacity: 0.8; }
+    .logo-bead { width: 4px; height: 4px; background: #a8a8a8; border-radius: 50%; margin-left: 2px; }
+
+    /* The Main Floating Dock */
+    #dock {
+      position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%);
+      display: flex; gap: 8px; background: var(--glass); backdrop-filter: blur(25px); 
+      padding: 8px; border-radius: 20px; border: 1px solid var(--border); 
+      box-shadow: var(--shadow-soft); z-index: 100;
+    }
+    button {
+      width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;
+      background: white; border: 1px solid var(--border); border-radius: 14px; 
+      font-size: 18px; cursor: pointer; transition: 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    button.active { background: var(--accent); color: white; border-color: var(--accent); transform: scale(1.1); }
+    button.eraser.active { background: var(--ones); color: white; border-color: var(--ones); }
+    .separator { width: 1px; height: 28px; background: var(--border); margin: 8px 4px; }
+
     canvas { display: block; background: #fff; cursor: crosshair; }
-    footer { position: absolute; bottom: 12px; left: 0; right: 0; text-align: center; font-size: 0.6rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #AEAEB2; pointer-events: none; opacity: 0.4; }
+    footer { position: absolute; bottom: 8px; width: 100%; text-align: center; font-size: 0.5rem; letter-spacing: 1px; color: #AEAEB2; pointer-events: none; }
   </style>
 </head>
 <body>
-<div id="logo-watermark">Math Things<span class="logo-bead"></span></div>
-<div id="toolbar" class="island">
-  <button id="btn-point" class="active" onclick="setTool('point')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5.5" fill="currentColor"/></svg></button>
-  <button id="btn-segment" onclick="setTool('segment')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><line x1="19" y1="5" x2="5" y2="19"/></svg></button>
-  <button id="btn-circle" onclick="setTool('circle')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v2M12 4L7.5 21.5M12 4l4.5 17.5M10 15h4M12 11a1.2 1.2 0 1 0 0-2.4 1.2 1.2 0 0 0 0 2.4z"/><path d="M7.5 21.5L7 24h1l-0.5-2.5z" fill="currentColor"/><path d="M16.5 21.5L16 24h1l-0.5-2.5z" fill="currentColor"/></svg></button>
-  <button id="btn-clear-guides" onclick="clearGuides()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-dasharray="3,3"><circle cx="12" cy="12" r="8"/><line x1="18" y1="6" x2="6" y2="18" stroke-dasharray="0" stroke-width="2.5"/></svg></button>
-  <button id="btn-erase" class="eraser" onclick="setTool('erase')"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-  <button class="danger" onclick="clearAll()" style="margin-top: 10px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 11.5a9 9 0 1 1-2-5.5"/><path d="M21 3v6h-6"/></svg></button>
-</div>
-<div id="filter-dock" class="island">
-  <button class="filter-btn active len" onclick="toggleFilter('len')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="8" y1="4" x2="12" y2="20"/><line x1="12" y1="4" x2="16" y2="20"/></svg></button>
-  <button class="filter-btn active ang" onclick="toggleFilter('ang')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 18a9 9 0 0 0-9-9"/><line x1="4" y1="18" x2="20" y2="18"/><line x1="4" y1="18" x2="12" y2="4"/></svg></button>
-  <button class="filter-btn active par" onclick="toggleFilter('par')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 16l4-4-4-4M13 16l4-4-4-4"/></svg></button>
-  <button class="filter-btn active inc" onclick="toggleFilter('inc')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="9" stroke-dasharray="2,2"/></svg></button>
-</div>
+<header><div class="logo">Math Things<span class="logo-bead"></span></div></header>
+
 <canvas id="canvas"></canvas>
-<footer>Math Things. | Math, in your hands.</footer>
+
+<div id="dock">
+    <button id="btn-point" class="active" onclick="setTool('point')">●</button>
+    <button id="btn-segment" onclick="setTool('segment')">/</button>
+    <button id="btn-circle" onclick="setTool('circle')">○</button>
+    <div class="separator"></div>
+    <button id="btn-erase" class="eraser" onclick="setTool('erase')">✕</button>
+    <button onclick="clearAll()">↺</button>
+</div>
+
+<footer>MATH THINGS. | MATH, IN YOUR HANDS.</footer>
+
 <script>
     const canvas = document.getElementById('canvas'), ctx = canvas.getContext('2d');
-    let width, height, midY, points = [], segments = [], guides = []; 
-    let currentTool = 'point', activePoint = null, dragPos = null, snapTarget = null, cameraScale = 1, cameraX = 0, cameraY = 0;
-    let filters = { len: true, ang: true, par: true, inc: true };
-    function resize() { width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight; midY = height / 2; cameraX = 0; cameraY = midY; draw(); }
-    function setTool(tool) { currentTool = tool; document.querySelectorAll('#toolbar button').forEach(b => b.classList.remove('active')); document.getElementById('btn-' + tool).classList.add('active'); }
-    function toggleFilter(f) { filters[f] = !filters[f]; document.querySelector('.filter-btn.'+f).classList.toggle('active'); }
-    function getDist(p1, p2) { return Math.sqrt((p1.x - p2.x)**2 + (p1.y - p2.y)**2); }
-    function worldToScreen(x, y) { return { x: (x - cameraX) * cameraScale + width/2, y: (y - cameraY) * cameraScale + height/2 }; }
-    function screenToWorld(x, y) { return { x: (x - width/2) / cameraScale + cameraX, y: (y - height/2) / cameraScale + cameraY }; }
-    function getAngDiff(a, b) { let d = Math.abs(a - b) % 180; return Math.min(d, 180 - d); }
-    function updateCamera() {
-        if (points.length < 2) { cameraScale = 1; cameraX = 0; cameraY = midY; return; }
-        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-        points.forEach(p => { minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x); minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y); });
-        guides.forEach(g => { const r = getDist(g.p1, g.p2); minX = Math.min(minX, g.p1.x - r); maxX = Math.max(maxX, g.p1.x + r); minY = Math.min(minY, g.p1.y - r); maxY = Math.max(maxY, g.p1.y + r); });
-        const pad = 160, scale = Math.min(width / ((maxX - minX) + pad*2), height / ((maxY - minY) + pad*2), 1.1);
-        cameraScale += (scale - cameraScale) * 0.1; cameraX += ((minX + maxX) / 2 - cameraX) * 0.1; cameraY += ((minY + maxY) / 2 - cameraY) * 0.1;
+    let width, height, midY, lastMidY;
+    let points = [], segments = [], guides = []; 
+    let currentTool = 'point', activePoint = null, dragPos = null, snapTarget = null;
+
+    function resize() {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+        midY = height / 2;
+        if (lastMidY !== undefined) { const dy = midY - lastMidY; points.forEach(p => p.y += dy); }
+        lastMidY = midY; draw();
     }
+
+    function setTool(tool) {
+        currentTool = tool;
+        document.querySelectorAll('#dock button').forEach(b => b.classList.remove('active'));
+        const btn = document.getElementById('btn-' + tool);
+        if (btn) btn.classList.add('active');
+    }
+
+    function getDist(p1, p2) { return Math.sqrt((p1.x - p2.x)**2 + (p1.y - p2.y)**2); }
+
     function getIntersections() {
         const inters = [];
-        guides.forEach((c1, i) => { guides.slice(i + 1).forEach(c2 => {
-            const d = getDist(c1.p1, c2.p1), r1 = getDist(c1.p1, c1.p2), r2 = getDist(c2.p1, c2.p2);
-            if (d > r1 + r2 || d < Math.abs(r1 - r2) || d === 0) return;
-            const a = (r1**2 - r2**2 + d**2) / (2 * d), h = Math.sqrt(r1**2 - a**2), x2 = c1.p1.x + a * (c2.p1.x - c1.p1.x) / d, y2 = c1.p1.y + a * (c2.p1.y - c1.p1.y) / d;
-            inters.push({x: x2 + h * (c2.p1.y - c1.p1.y) / d, y: y2 - h * (c2.p1.x - c1.p1.x) / d}, {x: x2 - h * (c2.p1.y - c1.p1.y) / d, y: y2 + h * (c2.p1.x - c1.p1.x) / d});
-        }); });
+        guides.forEach((c1, i) => {
+            guides.slice(i + 1).forEach(c2 => {
+                const d = getDist(c1.p1, c2.p1), r1 = getDist(c1.p1, c1.p2), r2 = getDist(c2.p1, c2.p2);
+                if (d > r1 + r2 || d < Math.abs(r1 - r2) || d === 0) return;
+                const a = (r1**2 - r2**2 + d**2) / (2 * d), h = Math.sqrt(r1**2 - a**2);
+                const x2 = c1.p1.x + a * (c2.p1.x - c1.p1.x) / d, y2 = c1.p1.y + a * (c2.p1.y - c1.p1.y) / d;
+                inters.push({x: x2 + h * (c2.p1.y - c1.p1.y) / d, y: y2 - h * (c2.p1.x - c1.p1.x) / d});
+                inters.push({x: x2 - h * (c2.p1.y - c1.p1.y) / d, y: y2 + h * (c2.p1.x - c1.p1.x) / d});
+            });
+        });
         segments.forEach((s1, i) => {
             segments.slice(i + 1).forEach(s2 => {
-                const den = (s1.p1.x - s1.p2.x) * (s2.p1.y - s2.p2.y) - (s1.p1.y - s1.p2.y) * (s2.p1.x - s2.p2.x);
+                const x1 = s1.p1.x, y1 = s1.p1.y, x2 = s1.p2.x, y2 = s1.p2.y, x3 = s2.p1.x, y3 = s2.p1.y, x4 = s2.p2.x, y4 = s2.p2.y;
+                const den = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
                 if (den === 0) return;
-                const t = ((s1.p1.x - s2.p1.x) * (s2.p1.y - s2.p2.y) - (s1.p1.y - s2.p1.y) * (s2.p1.x - s2.p2.x)) / den, u = -((s1.p1.x - s1.p2.x) * (s1.p1.y - s2.p1.y) - (s1.p1.y - s1.p2.y) * (s1.p1.x - s2.p1.x)) / den;
-                if (t >= 0 && t <= 1 && u >= 0 && u <= 1) inters.push({x: s1.p1.x + t * (s1.p2.x - s1.p1.x), y: s1.p1.y + t * (s1.p2.y - s1.p1.y)});
+                const t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / den, u = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / den;
+                if (t >= 0 && t <= 1 && u >= 0 && u <= 1) inters.push({x: x1 + t * (x2 - x1), y: y1 + t * (y2 - y1)});
             });
-            guides.forEach(g => { const r = getDist(g.p1, g.p2), dx = s1.p2.x - s1.p1.x, dy = s1.p2.y - s1.p1.y, fx = s1.p1.x - g.p1.x, fy = s1.p1.y - g.p1.y; const a = dx*dx + dy*dy, b = 2*(fx*dx + fy*dy), c = (fx*fx + fy*fy) - r*r; let d = b*b - 4*a*c; if (d >= 0) { d = Math.sqrt(d); const t1 = (-b-d)/(2*a), t2 = (-b+d)/(2*a); if (t1>=0 && t1<=1) inters.push({x: s1.p1.x+t1*dx, y: s1.p1.y+t1*dy}); if (t2>=0 && t2<=1) inters.push({x: s1.p1.x+t2*dx, y: s1.p1.y+t2*dy}); } });
+            guides.forEach(g => {
+                const r = getDist(g.p1, g.p2), dx = s1.p2.x - s1.p1.x, dy = s1.p2.y - s1.p1.y, fx = s1.p1.x - g.p1.x, fy = s1.p1.y - g.p1.y;
+                const a = dx*dx + dy*dy, b = 2*(fx*dx + fy*dy), c = (fx*fx + fy*fy) - r*r;
+                let disc = b*b - 4*a*c;
+                if (disc >= 0) { disc = Math.sqrt(disc); const t1 = (-b - disc)/(2*a), t2 = (-b + disc)/(2*a); if (t1 >= 0 && t1 <= 1) inters.push({x: s1.p1.x + t1*dx, y: s1.p1.y + t1*dy}); if (t2 >= 0 && t2 <= 1) inters.push({x: s1.p1.x + t2*dx, y: s1.p1.y + t2*dy}); }
+            });
         });
         return inters;
     }
+
+    function findSnap(x, y) {
+        if (Math.abs(y - midY) < 30) y = midY;
+        const all = [...points, ...getIntersections()];
+        let p = all.find(pt => getDist(pt, {x, y}) < 25);
+        return p ? {x: p.x, y: p.y} : {x, y, isNew: true};
+    }
+
+    function addSplitSegment(p1, p2) {
+        const ptsOn = points.filter(p => { if (p === p1 || p === p2) return false; const d1 = getDist(p1, p), d2 = getDist(p2, p), dTot = getDist(p1, p2); return Math.abs(d1 + d2 - dTot) < 0.5; }).sort((a, b) => getDist(p1, a) - getDist(p1, b));
+        let current = p1; ptsOn.forEach(p => { segments.push({p1: current, p2: p}); current = p; });
+        segments.push({p1: current, p2: p2});
+    }
+
     function ensurePoint(snap) {
-        let p = points.find(pt => Math.abs(pt.x - snap.x) < 0.1 && Math.abs(pt.y - snap.y) < 0.1);
-        if (!p) { p = {x: snap.x, y: snap.y}; points.push(p); segments.forEach((s, idx) => { const d1 = getDist(s.p1, p), d2 = getDist(s.p2, p), dt = getDist(s.p1, s.p2); if (Math.abs(d1+d2-dt) < 0.5 && d1>2 && d2>2) { segments.splice(idx, 1); segments.push({p1: s.p1, p2: p}, {p1: p, p2: s.p2}); } }); }
+        let p = points.find(pt => Math.abs(pt.x - snap.x) < 1 && Math.abs(pt.y - snap.y) < 1);
+        if (!p) {
+            p = {x: snap.x, y: snap.y}; points.push(p);
+            const toAdd = [];
+            segments.forEach((s, idx) => { if (s) { const d1 = getDist(s.p1, p), d2 = getDist(s.p2, p), dTot = getDist(s.p1, s.p2); if (Math.abs(d1 + d2 - dTot) < 0.5 && d1 > 2 && d2 > 2) { segments[idx] = null; toAdd.push({p1: s.p1, p2: p}, {p1: p, p2: s.p2}); } } });
+            segments = segments.filter(s => s !== null).concat(toAdd);
+        }
         return p;
     }
-    function findSnap(wx, wy) {
-        if (Math.abs(wy - midY) < 30/cameraScale) wy = midY;
-        const all = [...points, ...getIntersections()];
-        let p = all.find(pt => getDist(pt, {x: wx, y: wy}) < 25/cameraScale);
-        return p ? {x: p.x, y: p.y} : {x: wx, y: wy, isNew: true};
-    }
-    canvas.addEventListener('pointerdown', e => { 
-        const world = screenToWorld(e.clientX, e.clientY);
-        if (currentTool === 'erase') { 
-            const ptIdx = points.findIndex(p => getDist(p, world) < 20/cameraScale);
-            if (ptIdx !== -1) { const p = points[ptIdx]; segments = segments.filter(s => s.p1 !== p && s.p2 !== p); guides = guides.filter(g => g.p1 !== p && g.p2 !== p); points.splice(ptIdx, 1); }
-            else { const sIdx = segments.findIndex(s => Math.abs(getDist(s.p1, world) + getDist(s.p2, world) - getDist(s.p1, s.p2)) < 1.5/cameraScale); if (sIdx !== -1) segments.splice(sIdx, 1); else { const gIdx = guides.findIndex(g => Math.abs(getDist(g.p1, world) - getDist(g.p1, g.p2)) < 5.0/cameraScale); if (gIdx !== -1) guides.splice(gIdx, 1); } }
-            return; 
+
+    function performErase(x, y) {
+        const pointIdx = points.findIndex(p => getDist(p, {x, y}) < 20);
+        if (pointIdx !== -1) {
+            const p = points[pointIdx];
+            const connected = segments.filter(s => s.p1 === p || s.p2 === p);
+            if (connected.length === 2) {
+                const s1 = connected[0], s2 = connected[1], pA = s1.p1 === p ? s1.p2 : s1.p1, pB = s2.p1 === p ? s2.p2 : s2.p1;
+                if (Math.abs(getDist(pA, p) + getDist(pB, p) - getDist(pA, pB)) < 1.0) { segments.push({p1: pA, p2: pB}); }
+            }
+            segments = segments.filter(s => s.p1 !== p && s.p2 !== p);
+            guides = guides.filter(g => g.p1 !== p && g.p2 !== p);
+            points.splice(pointIdx, 1);
+            return;
         }
-        const snap = findSnap(world.x, world.y);
-        if (currentTool === 'point') ensurePoint(snap); else { activePoint = ensurePoint(snap); dragPos = world; }
-    });
-    canvas.addEventListener('pointermove', e => { if (!activePoint) return; dragPos = screenToWorld(e.clientX, e.clientY); snapTarget = findSnap(dragPos.x, dragPos.y); });
-    canvas.addEventListener('pointerup', e => { if (activePoint && dragPos) { const end = findSnap(dragPos.x, dragPos.y); const final = ensurePoint(end); if (final !== activePoint) { if (currentTool === 'segment') { const ptsOn = points.filter(p => p !== activePoint && p !== final && Math.abs(getDist(activePoint, p) + getDist(final, p) - getDist(activePoint, final)) < 0.5).sort((a,b) => getDist(activePoint, a) - getDist(activePoint, b)); let curr = activePoint; ptsOn.forEach(p => { segments.push({p1: curr, p2: p}); curr = p; }); segments.push({p1: curr, p2: final}); } else guides.push({p1: activePoint, p2: final}); } } activePoint = null; dragPos = null; snapTarget = null; });
-    function clearGuides() { guides = []; }
-    function clearAll() { points = []; segments = []; guides = []; cameraScale = 1; cameraX = 0; cameraY = midY; }
-    function draw() {
-        updateCamera(); ctx.clearRect(0, 0, width, height);
-        const hY = worldToScreen(0, midY).y; ctx.beginPath(); ctx.strokeStyle = '#e0e0e0'; ctx.lineWidth = 1.5; ctx.setLineDash([8, 8]); ctx.moveTo(0, hY); ctx.lineTo(width, hY); ctx.stroke(); ctx.setLineDash([]);
-        guides.forEach(g => { const p1 = worldToScreen(g.p1.x, g.p1.y), r = getDist(g.p1, g.p2) * cameraScale; ctx.beginPath(); ctx.strokeStyle = '#d8d8d8'; ctx.setLineDash([4, 4]); ctx.arc(p1.x, p1.y, r, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]); });
-        getIntersections().forEach(pt => { const p = worldToScreen(pt.x, pt.y); ctx.beginPath(); ctx.strokeStyle = 'rgba(0,122,255,0.2)'; ctx.arc(p.x, p.y, 8, 0, Math.PI * 2); ctx.stroke(); });
-        segments.forEach(s => { const p1 = worldToScreen(s.p1.x, s.p1.y), p2 = worldToScreen(s.p2.x, s.p2.y); ctx.beginPath(); ctx.strokeStyle = '#1d1d1f'; ctx.lineWidth = 2.8; ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke(); });
-        
-        const lenBuckets = [], angleBuckets = [], slopeBuckets = [];
-        segments.forEach(s => { 
-            const l = getDist(s.p1, s.p2); if(l < 5) return;
-            let b = lenBuckets.find(x => Math.abs(x.key - l) < 2.0); if(!b) { b = {key: l, items: []}; lenBuckets.push(b); } b.items.push(s);
-            let ang = Math.atan2(s.p2.y-s.p1.y, s.p2.x-s.p1.x) * 180 / Math.PI; if(ang < 0) ang += 180; if(ang >= 180) ang -= 180;
-            let sb = slopeBuckets.find(x => getAngDiff(x.key, ang) < 1.5); if(!sb) { sb = {key: ang, items: []}; slopeBuckets.push(sb); } sb.items.push(s);
-        });
-        
-        if (filters.len) { lenBuckets.forEach((b, idx) => { if(b.items.length > 1) { b.items.forEach(s => { const p1 = worldToScreen(s.p1.x, s.p1.y), p2 = worldToScreen(s.p2.x, s.p2.y), mx = (p1.x+p2.x)/2, my = (p1.y+p2.y)/2, a = Math.atan2(p2.y-p1.y, p2.x-p1.x)+Math.PI/2; ctx.beginPath(); ctx.strokeStyle='#DC143C'; ctx.lineWidth=2.2; for(let i=0; i<=idx; i++) { const off = (i - idx/2)*6, ox = Math.cos(a-Math.PI/2)*off, oy = Math.sin(a-Math.PI/2)*off; ctx.moveTo(mx+ox-Math.cos(a)*8, my+oy-Math.sin(a)*8); ctx.lineTo(mx+ox+Math.cos(a)*8, my+oy+Math.sin(a)*8); } ctx.stroke(); }); } }); }
-        if (filters.par) { slopeBuckets.forEach((b, idx) => { if(b.items.length > 1) { b.items.forEach(s => { const p1 = worldToScreen(s.p1.x, s.p1.y), p2 = worldToScreen(s.p2.x, s.p2.y), mx = (p1.x+p2.x)/2, my = (p1.y+p2.y)/2, a = Math.atan2(p2.y-p1.y, p2.x-p1.x); ctx.beginPath(); ctx.strokeStyle='#FFD700'; ctx.lineWidth=1.8; for(let i=0; i<=idx; i++) { const off = (i - idx/2)*8, ox = mx+Math.cos(a)*off, oy = my+Math.sin(a)*off; ctx.moveTo(ox-Math.cos(a+0.5)*10, oy-Math.sin(a+0.5)*10); ctx.lineTo(ox, oy); ctx.lineTo(ox-Math.cos(a-0.5)*10, oy-Math.sin(a-0.5)*10); } ctx.stroke(); }); } }); }
-        
-        points.forEach(v => {
-            const vs = worldToScreen(v.x, v.y), conn = segments.filter(s => s.p1 === v || s.p2 === v).map(s => { 
-                const p2 = s.p1 === v ? s.p2 : s.p1; return { s, p: p2, len: getDist(v, p2), a: Math.atan2(worldToScreen(p2.x, p2.y).y - vs.y, worldToScreen(p2.x, p2.y).x - vs.x) }; 
-            }).sort((a,b) => a.a-b.a);
-            for(let i=0; i<conn.length; i++) { 
-                const s1 = conn[i], s2 = conn[(i+1)%conn.length]; let d = s2.a-s1.a; if(d<0) d+=Math.PI*2; if(d>Math.PI) continue; const deg = d*180/Math.PI; if (deg < 10 || deg > 170) continue;
-                if(Math.abs(deg-90) < 1.8 && filters.ang && filters.len) { 
-                    const isPB = [s1.s, s2.s].some(s => { const dt = getDist(s.p1, s.p2), d1 = getDist(s.p1, v), d2 = getDist(s.p2, v); return Math.abs(d1-d2) < 1.5 && Math.abs(d1+d2-dt) < 0.1; });
-                    const v1 = {x: Math.cos(s1.a), y: Math.sin(s1.a)}, v2 = {x: Math.cos(s2.a), y: Math.sin(s2.a)};
-                    ctx.beginPath(); ctx.strokeStyle='#007AFF'; ctx.lineWidth = isPB ? 4.0 : 1.8; ctx.moveTo(vs.x+v1.x*18, vs.y+v1.y*18); ctx.lineTo(vs.x+v1.x*18+v2.x*18, vs.y+v1.y*18+v2.y*18); ctx.lineTo(vs.x+v2.x*18, vs.y+v2.y*18); ctx.stroke(); 
-                } else if(filters.ang) {
-                    const minL = Math.min(s1.len, s2.len); if (minL < 25/cameraScale) continue;
-                    let ab = angleBuckets.find(x => Math.abs(x.key - deg) < 2.0); if(!ab) { ab = {key: deg, items: []}; angleBuckets.push(ab); } ab.items.push({vs, s1, s2});
+        const segmentIdx = segments.findIndex(s => { const d1 = getDist(s.p1, {x, y}), d2 = getDist(s.p2, {x, y}), dt = getDist(s.p1, s.p2); return Math.abs(d1 + d2 - dt) < 2.0; });
+        if (segmentIdx !== -1) { segments.splice(segmentIdx, 1); return; }
+        const guideIdx = guides.findIndex(g => { const d = getDist(g.p1, {x, y}), r = getDist(g.p1, g.p2); return Math.abs(d - r) < 8.0; });
+        if (guideIdx !== -1) { guides.splice(guideIdx, 1); }
+    }
+
+    canvas.addEventListener('pointerdown', e => { const x = e.clientX, y = e.clientY; if (currentTool === 'erase') { performErase(x, y); draw(); return; } const snap = findSnap(x, y); if (currentTool === 'point') { ensurePoint(snap); } else { activePoint = ensurePoint(snap); dragPos = {x, y}; } draw(); });
+    canvas.addEventListener('pointermove', e => { if (!activePoint) return; dragPos = {x: e.clientX, y: e.clientY}; snapTarget = findSnap(dragPos.x, dragPos.y); draw(); });
+    canvas.addEventListener('pointerup', e => { if (activePoint && dragPos) { const endSnap = findSnap(dragPos.x, dragPos.y); const finalPoint = ensurePoint(endSnap); if (finalPoint !== activePoint) { if (currentTool === 'segment') addSplitSegment(activePoint, finalPoint); if (currentTool === 'circle') guides.push({p1: activePoint, p2: finalPoint}); } } activePoint = null; dragPos = null; snapTarget = null; draw(); });
+
+    function clearAll() { points = []; segments = []; guides = []; draw(); }
+
+    function drawConstraints() {
+        const lenGroups = {};
+        segments.forEach(s => { const len = Math.round(getDist(s.p1, s.p2)); if (len < 5) return; if (!lenGroups[len]) lenGroups[len] = []; lenGroups[len].push(s); });
+        let tickSet = 1;
+        Object.keys(lenGroups).sort((a,b)=>a-b).forEach(lenKey => { const group = lenGroups[lenKey]; if (group.length > 1) { group.forEach(s => { const mx = (s.p1.x + s.p2.x) / 2, my = (s.p1.y + s.p2.y) / 2, angle = Math.atan2(s.p2.y - s.p1.y, s.p2.x - s.p1.x) + Math.PI/2; ctx.beginPath(); ctx.strokeStyle = '#007AFF'; ctx.lineWidth = 1.5; for(let i=0; i<tickSet; i++) { const offset = (i - (tickSet-1)/2) * 5; const ox = Math.cos(angle - Math.PI/2) * offset, oy = Math.sin(angle - Math.PI/2) * offset; ctx.moveTo(mx + ox - Math.cos(angle)*6, my + oy - Math.sin(angle)*6); ctx.lineTo(mx + ox + Math.cos(angle)*6, my + oy + Math.sin(angle)*6); } ctx.stroke(); }); tickSet++; } });
+
+        points.forEach(vertex => {
+            const connected = segments.filter(s => s.p1 === vertex || s.p2 === vertex).map(s => { const p2 = s.p1 === vertex ? s.p2 : s.p1; return { p: p2, angle: Math.atan2(p2.y - vertex.y, p2.x - vertex.x) }; }).sort((a, b) => a.angle - b.angle);
+            for (let i = 0; i < connected.length; i++) {
+                const s1 = connected[i], s2 = connected[(i + 1) % connected.length];
+                let diff = s2.angle - s1.angle; if (diff < 0) diff += Math.PI * 2; if (diff > Math.PI) continue;
+                const deg = Math.round(diff * 180 / Math.PI);
+                if (deg > 5 && deg < 175) {
+                    if (deg === 90) { 
+                        const v1 = {x: (s1.p.x - vertex.x), y: (s1.p.y - vertex.y)}, v2 = {x: (s2.p.x - vertex.x), y: (s2.p.y - vertex.y)};
+                        const u1 = {x: v1.x/Math.sqrt(v1.x**2+v1.y**2)*15, y: v1.y/Math.sqrt(v1.x**2+v1.y**2)*15}, u2 = {x: v2.x/Math.sqrt(v2.x**2+v2.y**2)*15, y: v2.y/Math.sqrt(v2.x**2+v2.y**2)*15};
+                        ctx.beginPath(); ctx.strokeStyle = '#007AFF'; ctx.lineWidth = 1.2; ctx.moveTo(vertex.x + u1.x, vertex.y + u1.y); ctx.lineTo(vertex.x + u1.x + u2.x, vertex.y + u1.y + u2.y); ctx.lineTo(vertex.x + u2.x, vertex.y + u2.y); ctx.stroke();
+                    } else { ctx.beginPath(); ctx.strokeStyle = '#007AFF'; ctx.lineWidth = 1.2; ctx.arc(vertex.x, vertex.y, 20, s1.angle, s2.angle); ctx.stroke(); }
                 }
             }
         });
-        if (filters.ang) { angleBuckets.forEach((b, idx) => { if(b.items.length > 1) { b.items.forEach(a => { 
-            const midA = (a.s1.a + a.s2.a)/2, rad = 30 * cameraScale;
-            ctx.beginPath(); ctx.strokeStyle = '#007AFF'; ctx.lineWidth=1.8; ctx.arc(a.vs.x, a.vs.y, rad, a.s1.a, a.s2.a); ctx.stroke();
-            for(let i=0; i<idx; i++) { 
-                const off = (i - (idx-1)/2)*6, ang = midA + off/rad;
-                ctx.beginPath(); ctx.moveTo(a.vs.x + Math.cos(ang)*(rad-6), a.vs.y + Math.sin(ang)*(rad-6));
-                ctx.lineTo(a.vs.x + Math.cos(ang)*(rad+6), a.vs.y + Math.sin(ang)*(rad+6)); ctx.stroke();
-            }
-        }); } }); }
-        if (filters.inc) { points.forEach(p => { segments.forEach(s => { const d1 = getDist(s.p1, p), d2 = getDist(s.p2, p), dt = getDist(s.p1, s.p2); if(Math.abs(d1-d2) < 1.5 && Math.abs(d1+d2-dt) < 0.1) { const vs = worldToScreen(p.x, p.y); ctx.beginPath(); ctx.strokeStyle = '#AEAEB2'; ctx.lineWidth = 1.2; ctx.arc(vs.x, vs.y, 11, 0, Math.PI*2); ctx.stroke(); } }); }); }
-        if (activePoint && dragPos) { const p1 = worldToScreen(activePoint.x, activePoint.y), p2 = worldToScreen(snapTarget?.x || dragPos.x, snapTarget?.y || dragPos.y); ctx.beginPath(); ctx.strokeStyle = 'rgba(0,122,255,0.4)'; if (currentTool === 'segment') { ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); } else { ctx.arc(p1.x, p1.y, getDist(p1, p2), 0, Math.PI * 2); } ctx.stroke(); }
-        points.forEach(p => { const s = worldToScreen(p.x, p.y), g = ctx.createRadialGradient(s.x-2, s.y-2, 0, s.x, s.y, 6); g.addColorStop(0, '#efefef'); g.addColorStop(0.5, '#a8a8a8'); g.addColorStop(1, '#888'); ctx.beginPath(); ctx.fillStyle = (p === activePoint || (snapTarget && Math.abs(snapTarget.x - p.x) < 0.1)) ? '#007AFF' : g; ctx.arc(s.x, s.y, 5.5, 0, Math.PI * 2); ctx.fill(); if (p !== activePoint) { ctx.strokeStyle = 'rgba(0,0,0,0.1)'; ctx.stroke(); } });
-        requestAnimationFrame(draw);
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, width, height);
+        ctx.beginPath(); ctx.strokeStyle = '#e5e5ea'; ctx.lineWidth = 1; ctx.moveTo(0, midY); ctx.lineTo(width, midY); ctx.stroke();
+        guides.forEach(g => { ctx.beginPath(); ctx.strokeStyle = '#d1d1d6'; ctx.setLineDash([4, 4]); ctx.arc(g.p1.x, g.p1.y, getDist(g.p1, g.p2), 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]); });
+        getIntersections().forEach(pt => { ctx.beginPath(); ctx.strokeStyle = 'rgba(0,122,255,0.2)'; ctx.arc(pt.x, pt.y, 8, 0, Math.PI * 2); ctx.stroke(); });
+        segments.forEach(s => { ctx.beginPath(); ctx.strokeStyle = '#1d1d1f'; ctx.lineWidth = 2; ctx.moveTo(s.p1.x, s.p1.y); ctx.lineTo(s.p2.x, s.p2.y); ctx.stroke(); });
+        drawConstraints();
+        if (activePoint && dragPos) { ctx.beginPath(); ctx.strokeStyle = 'rgba(0,122,255,0.3)'; const end = snapTarget || {x: dragPos.x, y: dragPos.y}; if (currentTool === 'segment') { ctx.moveTo(activePoint.x, activePoint.y); ctx.lineTo(end.x, end.y); } else { ctx.arc(activePoint.x, activePoint.y, getDist(activePoint, end), 0, Math.PI * 2); } ctx.stroke(); }
+        points.forEach(p => {
+            ctx.beginPath(); const grad = ctx.createRadialGradient(p.x-1, p.y-1, 0, p.x, p.y, 5); grad.addColorStop(0, '#efefef'); grad.addColorStop(1, '#888');
+            ctx.fillStyle = (p === activePoint || (snapTarget && Math.abs(snapTarget.x - p.x) < 1 && Math.abs(snapTarget.y - p.y) < 1)) ? '#007AFF' : grad;
+            ctx.arc(p.x, p.y, 5, 0, Math.PI * 2); ctx.fill();
+        });
     }
     window.addEventListener('resize', resize); resize();
 </script>
