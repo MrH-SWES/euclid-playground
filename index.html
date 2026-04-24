@@ -34,7 +34,7 @@
   <button id="btn-circle" onclick="setTool('circle')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v2M12 4L7.5 21.5M12 4l4.5 17.5M10 15h4M12 11a1.2 1.2 0 1 0 0-2.4 1.2 1.2 0 0 0 0 2.4z"/><path d="M7.5 21.5L7 24h1l-0.5-2.5z" fill="currentColor"/><path d="M16.5 21.5L16 24h1l-0.5-2.5z" fill="currentColor"/></svg></button>
   <button id="btn-clear-guides" onclick="clearGuides()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-dasharray="3,3"><circle cx="12" cy="12" r="8"/><line x1="18" y1="6" x2="6" y2="18" stroke-dasharray="0" stroke-width="2.5"/></svg></button>
   <button id="btn-erase" class="eraser" onclick="setTool('erase')"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-  <button class="danger" onclick="clearAll()" style="margin-top: 10px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8.1 8.1 0 0 0-15.5-2m-.5 5v-5h5M4 13a8.1 8.1 0 0 0 15.5 2m.5-5v5h-5"/></svg></button>
+  <button class="danger" onclick="clearAll()" style="margin-top: 10px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
 </div>
 <canvas id="canvas"></canvas>
 <footer>Math Things. | Math, in your hands.</footer>
@@ -55,7 +55,7 @@
         let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
         points.forEach(p => { minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x); minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y); });
         guides.forEach(g => { const r = getDist(g.p1, g.p2); minX = Math.min(minX, g.p1.x - r); maxX = Math.max(maxX, g.p1.x + r); minY = Math.min(minY, g.p1.y - r); maxY = Math.max(maxY, g.p1.y + r); });
-        const pad = 150, scale = Math.min(width / ((maxX - minX) + pad*2), height / ((maxY - minY) + pad*2), 1.15);
+        const pad = 160, scale = Math.min(width / ((maxX - minX) + pad*2), height / ((maxY - minY) + pad*2), 1.15);
         cameraScale += (scale - cameraScale) * 0.1; cameraX += ((minX + maxX) / 2 - cameraX) * 0.1; cameraY += ((minY + maxY) / 2 - cameraY) * 0.1;
     }
 
@@ -96,7 +96,7 @@
         const world = screenToWorld(e.clientX, e.clientY);
         if (currentTool === 'erase') { 
             const ptIdx = points.findIndex(p => getDist(p, world) < 20/cameraScale);
-            if (ptIdx !== -1) { const p = points[ptIdx]; const conn = segments.filter(s => s.p1 === p || s.p2 === p); if (conn.length === 2) { const pA = conn[0].p1 === p ? conn[0].p2 : conn[0].p1, pB = conn[1].p1 === p ? conn[1].p2 : conn[1].p1; if (Math.abs(getDist(pA, p) + getDist(pB, p) - getDist(pA, pB)) < 1.0) segments.push({p1: pA, p2: pB}); } segments = segments.filter(s => s.p1 !== p && s.p2 !== p); guides = guides.filter(g => g.p1 !== p && g.p2 !== p); points.splice(ptIdx, 1); }
+            if (ptIdx !== -1) { const p = points[ptIdx]; segments = segments.filter(s => s.p1 !== p && s.p2 !== p); guides = guides.filter(g => g.p1 !== p && g.p2 !== p); points.splice(ptIdx, 1); }
             else { const sIdx = segments.findIndex(s => Math.abs(getDist(s.p1, world) + getDist(s.p2, world) - getDist(s.p1, s.p2)) < 1.5/cameraScale); if (sIdx !== -1) segments.splice(sIdx, 1); else { const gIdx = guides.findIndex(g => Math.abs(getDist(g.p1, world) - getDist(g.p1, g.p2)) < 5.0/cameraScale); if (gIdx !== -1) guides.splice(gIdx, 1); } }
             draw(); return; 
         }
@@ -115,57 +115,65 @@
     function draw() {
         updateCamera(); ctx.clearRect(0, 0, width, height);
         const hY = worldToScreen(0, midY).y; ctx.beginPath(); ctx.strokeStyle = '#e0e0e0'; ctx.lineWidth = 1.5; ctx.setLineDash([8, 8]); ctx.moveTo(0, hY); ctx.lineTo(width, hY); ctx.stroke(); ctx.setLineDash([]);
-        
         guides.forEach(g => { const p1 = worldToScreen(g.p1.x, g.p1.y), r = getDist(g.p1, g.p2) * cameraScale; ctx.beginPath(); ctx.strokeStyle = '#d8d8d8'; ctx.setLineDash([4, 4]); ctx.arc(p1.x, p1.y, r, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]); });
         
-        // COLLINEARITY DETECTION (3+ points)
+        // COLLINEARITY (Faint)
         for(let i=0; i<points.length; i++) {
           for(let j=i+1; j<points.length; j++) {
             const p1 = points[i], p2 = points[j];
             const pLine = points.filter(p => p !== p1 && p !== p2 && Math.abs(getDist(p1,p) + getDist(p2,p) - getDist(p1,p2)) < 0.5);
-            if(pLine.length > 0) { 
-              const s1 = worldToScreen(p1.x, p1.y), s2 = worldToScreen(p2.x, p2.y);
-              ctx.beginPath(); ctx.strokeStyle = 'rgba(174,174,178,0.15)'; ctx.lineWidth = 12; ctx.moveTo(s1.x, s1.y); ctx.lineTo(s2.x, s2.y); ctx.stroke();
-            }
+            if(pLine.length > 0) { const s1 = worldToScreen(p1.x, p1.y), s2 = worldToScreen(p2.x, p2.y); ctx.beginPath(); ctx.strokeStyle = 'rgba(174,174,178,0.1)'; ctx.lineWidth = 10; ctx.moveTo(s1.x, s1.y); ctx.lineTo(s2.x, s2.y); ctx.stroke(); }
           }
         }
 
-        getIntersections().forEach(pt => { const p = worldToScreen(pt.x, pt.y); ctx.beginPath(); ctx.strokeStyle = 'rgba(0,122,255,0.25)'; ctx.arc(p.x, p.y, 8, 0, Math.PI * 2); ctx.stroke(); });
+        getIntersections().forEach(pt => { const p = worldToScreen(pt.x, pt.y); ctx.beginPath(); ctx.strokeStyle = 'rgba(0,122,255,0.2)'; ctx.arc(p.x, p.y, 8, 0, Math.PI * 2); ctx.stroke(); });
         segments.forEach(s => { const p1 = worldToScreen(s.p1.x, s.p1.y), p2 = worldToScreen(s.p2.x, s.p2.y); ctx.beginPath(); ctx.strokeStyle = '#1d1d1f'; ctx.lineWidth = 2.8; ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke(); });
         
-        // STABLE BUCKETING logic
+        // BUCKETS
         const lenBuckets = [], angleBuckets = [], slopeBuckets = [];
         segments.forEach(s => { 
             const l = getDist(s.p1, s.p2); if(l < 5) return;
-            let b = lenBuckets.find(x => Math.abs(x.key - l) < 2.0);
-            if(!b) { b = {key: l, items: []}; lenBuckets.push(b); } b.items.push(s);
-
+            let b = lenBuckets.find(x => Math.abs(x.key - l) < 2.0); if(!b) { b = {key: l, items: []}; lenBuckets.push(b); } b.items.push(s);
             let ang = Math.atan2(s.p2.y-s.p1.y, s.p2.x-s.p1.x) * 180 / Math.PI; if(ang < 0) ang += 180; if(ang >= 180) ang -= 180;
-            let sb = slopeBuckets.find(x => getAngDiff(x.key, ang) < 1.5);
-            if(!sb) { sb = {key: ang, items: []}; slopeBuckets.push(sb); } sb.items.push(s);
+            let sb = slopeBuckets.find(x => getAngDiff(x.key, ang) < 1.5); if(!sb) { sb = {key: ang, items: []}; slopeBuckets.push(sb); } sb.items.push(s);
         });
 
-        // DRAW TICKS
+        // TICKS
         lenBuckets.forEach((b, idx) => { if(b.items.length > 1) { b.items.forEach(s => { const p1 = worldToScreen(s.p1.x, s.p1.y), p2 = worldToScreen(s.p2.x, s.p2.y), mx = (p1.x+p2.x)/2, my = (p1.y+p2.y)/2, a = Math.atan2(p2.y-p1.y, p2.x-p1.x)+Math.PI/2; ctx.beginPath(); ctx.strokeStyle='#007AFF'; ctx.lineWidth=2.2; for(let i=0; i<=idx; i++) { const off = (i - idx/2)*6, ox = Math.cos(a-Math.PI/2)*off, oy = Math.sin(a-Math.PI/2)*off; ctx.moveTo(mx+ox-Math.cos(a)*8, my+oy-Math.sin(a)*8); ctx.lineTo(mx+ox+Math.cos(a)*8, my+oy+Math.sin(a)*8); } ctx.stroke(); }); } });
 
-        // DRAW PARALLELS
+        // PARALLELS
         slopeBuckets.forEach((b, idx) => { if(b.items.length > 1) { b.items.forEach(s => { const p1 = worldToScreen(s.p1.x, s.p1.y), p2 = worldToScreen(s.p2.x, s.p2.y), mx = (p1.x+p2.x)/2, my = (p1.y+p2.y)/2, a = Math.atan2(p2.y-p1.y, p2.x-p1.x); ctx.beginPath(); ctx.strokeStyle='#4169E1'; ctx.lineWidth=1.8; for(let i=0; i<=idx; i++) { const off = (i - idx/2)*8, ox = mx+Math.cos(a)*off, oy = my+Math.sin(a)*off; ctx.moveTo(ox-Math.cos(a+0.5)*10, oy-Math.sin(a+0.5)*10); ctx.lineTo(ox, oy); ctx.lineTo(ox-Math.cos(a-0.5)*10, oy-Math.sin(a-0.5)*10); } ctx.stroke(); }); } });
 
-        // ANGLE EQUIVALENCE
+        // SURGICAL ANGLE EQUIVALENCE
         points.forEach(v => {
             const vs = worldToScreen(v.x, v.y);
-            const conn = segments.filter(s => s.p1 === v || s.p2 === v).map(s => { const p2 = s.p1 === v ? s.p2 : s.p1; return { s, p: worldToScreen(p2.x, p2.y), a: Math.atan2(p2.y - v.y, p2.x - v.x) }; }).sort((a,b) => a.a-b.a);
-            for(let i=0; i<conn.length; i++) { const s1 = conn[i], s2 = conn[(i+1)%conn.length]; let d = s2.a-s1.a; if(d<0) d+=Math.PI*2; if(d>Math.PI) continue; const deg = d*180/Math.PI;
+            const conn = segments.filter(s => s.p1 === v || s.p2 === v).map(s => { 
+                const p2 = s.p1 === v ? s.p2 : s.p1; 
+                return { s, p: p2, len: getDist(v, p2), a: Math.atan2(worldToScreen(p2.x, p2.y).y - vs.y, worldToScreen(p2.x, p2.y).x - vs.x) }; 
+            }).sort((a,b) => a.a-b.a);
+            
+            for(let i=0; i<conn.length; i++) { 
+                const s1 = conn[i], s2 = conn[(i+1)%conn.length]; 
+                let d = s2.a-s1.a; if(d<0) d+=Math.PI*2; if(d>Math.PI) continue; 
+                const deg = d*180/Math.PI;
+                if (deg < 10 || deg > 170) continue; // Cull clutter
+
                 if(Math.abs(deg-90) < 1.8) { 
-                    const isPerpBisector = [s1.s, s2.s].some(s => { const dt = getDist(s.p1, s.p2), d1 = getDist(s.p1, v), d2 = getDist(s.p2, v); return Math.abs(d1-d2) < 1.5 && Math.abs(d1+d2-dt) < 0.1; });
+                    const isPB = [s1.s, s2.s].some(s => { const dt = getDist(s.p1, s.p2), d1 = getDist(s.p1, v), d2 = getDist(s.p2, v); return Math.abs(d1-d2) < 1.5 && Math.abs(d1+d2-dt) < 0.1; });
                     const v1 = {x: Math.cos(s1.a), y: Math.sin(s1.a)}, v2 = {x: Math.cos(s2.a), y: Math.sin(s2.a)};
-                    ctx.beginPath(); ctx.strokeStyle='#007AFF'; ctx.lineWidth = isPerpBisector ? 3.8 : 1.8; ctx.moveTo(vs.x+v1.x*18, vs.y+v1.y*18); ctx.lineTo(vs.x+v1.x*18+v2.x*18, vs.y+v1.y*18+v2.y*18); ctx.lineTo(vs.x+v2.x*18, vs.y+v2.y*18); ctx.stroke(); 
-                } else if(deg > 5 && deg < 175) { let ab = angleBuckets.find(x => Math.abs(x.key - deg) < 2.0); if(!ab) { ab = {key: deg, items: []}; angleBuckets.push(ab); } ab.items.push({vs, s1, s2}); }
+                    ctx.beginPath(); ctx.strokeStyle='#007AFF'; ctx.lineWidth = isPB ? 3.8 : 1.8; ctx.moveTo(vs.x+v1.x*18, vs.y+v1.y*18); ctx.lineTo(vs.x+v1.x*18+v2.x*18, vs.y+v1.y*18+v2.y*18); ctx.lineTo(vs.x+v2.x*18, vs.y+v2.y*18); ctx.stroke(); 
+                } else {
+                    const minL = Math.min(s1.len, s2.len);
+                    if (minL < 25/cameraScale) continue; // Don't draw arcs on tiny segments
+                    let ab = angleBuckets.find(x => Math.abs(x.key - deg) < 2.0);
+                    if(!ab) { ab = {key: deg, items: []}; angleBuckets.push(ab); }
+                    ab.items.push({vs, s1, s2, rad: Math.min(25, minL * cameraScale * 0.4)});
+                }
             }
         });
-        angleBuckets.forEach((b, idx) => { b.items.forEach(a => { ctx.beginPath(); ctx.strokeStyle = b.items.length > 1 ? '#007AFF' : 'rgba(0,122,255,0.15)'; ctx.lineWidth=1.8; for(let i=0; i< (b.items.length > 1 ? idx+1 : 1); i++) ctx.arc(a.vs.x, a.vs.y, 25 + i*5, a.s1.a, a.s2.a); ctx.stroke(); }); });
+        angleBuckets.forEach((b, idx) => { if(b.items.length > 1) { b.items.forEach(a => { ctx.beginPath(); ctx.strokeStyle = '#007AFF'; ctx.lineWidth=1.8; for(let i=0; i<Math.min(idx+1, 2); i++) ctx.arc(a.vs.x, a.vs.y, a.rad + i*5, a.s1.a, a.s2.a); ctx.stroke(); }); } });
 
-        // MIDPOINT (Halo)
+        // MIDPOINT
         points.forEach(p => { segments.forEach(s => { const d1 = getDist(s.p1, p), d2 = getDist(s.p2, p), dt = getDist(s.p1, s.p2); if(Math.abs(d1-d2) < 1.5 && Math.abs(d1+d2-dt) < 0.1) { const vs = worldToScreen(p.x, p.y); ctx.beginPath(); ctx.strokeStyle = '#AEAEB2'; ctx.lineWidth = 1.2; ctx.arc(vs.x, vs.y, 11, 0, Math.PI*2); ctx.stroke(); } }); });
 
         if (activePoint && dragPos) { const p1 = worldToScreen(activePoint.x, activePoint.y), p2 = worldToScreen(snapTarget?.x || dragPos.x, snapTarget?.y || dragPos.y); ctx.beginPath(); ctx.strokeStyle = 'rgba(0,122,255,0.4)'; if (currentTool === 'segment') { ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); } else { ctx.arc(p1.x, p1.y, getDist(p1, p2), 0, Math.PI * 2); } ctx.stroke(); }
