@@ -9,30 +9,32 @@
     :root {
       --bg: #F5F5F7; --surface: #FFFFFF; --text-main: #1D1D1F; --accent: #007AFF; --ones: #DC143C;
       --border: rgba(0,0,0,0.08); --shadow-soft: 0 4px 24px rgba(0,0,0,0.06);
-      --glass: rgba(255, 255, 255, 0.8);
+      --glass: rgba(255, 255, 255, 0.85);
     }
     body { font-family: 'Lexend', sans-serif; background: var(--bg); color: var(--text-main); margin: 0; overflow: hidden; touch-action: none; }
     
     #logo-watermark {
-      position: absolute; top: 20px; left: 24px; pointer-events: none; opacity: 0.8;
+      position: absolute; top: 20px; left: 24px; pointer-events: none; opacity: 0.9;
       font-weight: 900; font-size: 1.1rem; letter-spacing: -0.05em; display: flex; align-items: baseline;
     }
     .logo-bead { width: 5px; height: 5px; background: #a8a8a8; border-radius: 50%; margin-left: 2px; }
 
     #toolbar { 
-      position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
-      display: flex; gap: 8px; background: var(--glass); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-      padding: 8px; border-radius: 14px; box-shadow: var(--shadow-soft); border: 1px solid var(--border); z-index: 100;
+      position: absolute; top: 64px; left: 24px;
+      display: flex; flex-direction: column; gap: 8px; background: var(--glass); 
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      padding: 10px; border-radius: 16px; box-shadow: var(--shadow-soft); border: 1px solid var(--border); z-index: 100;
     }
     button { 
       background: white; border: 1px solid var(--border); border-radius: 10px; 
-      padding: 10px 16px; font-family: 'Lexend'; font-weight: 600; font-size: 0.8rem; 
+      padding: 12px; font-family: 'Lexend'; font-weight: 600; font-size: 0.8rem; 
       cursor: pointer; transition: 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+      text-align: left; width: 130px;
     }
-    button.active { background: var(--accent); color: white; border-color: var(--accent); transform: scale(1.05); }
+    button.active { background: var(--accent); color: white; border-color: var(--accent); transform: scale(1.02); }
     button.eraser.active { background: var(--ones); color: white; border-color: var(--ones); }
-    button.danger { color: var(--ones); }
-    button:active { transform: scale(0.95); }
+    button.danger { color: var(--ones); margin-top: 8px; border-style: dashed; }
+    button:active { transform: scale(0.98); }
 
     canvas { display: block; background: #fff; cursor: crosshair; }
     
@@ -52,7 +54,7 @@
   <button id="btn-segment" onclick="setTool('segment')">/ Segment</button>
   <button id="btn-circle" onclick="setTool('circle')">○ Compass</button>
   <button id="btn-erase" class="eraser" onclick="setTool('erase')">✕ Remove</button>
-  <button class="danger" style="margin-left:8px" onclick="clearAll()">Reset</button>
+  <button class="danger" onclick="clearAll()">⟲ Reset</button>
 </div>
 
 <canvas id="canvas"></canvas>
@@ -187,7 +189,9 @@
 
     function draw() {
         ctx.clearRect(0, 0, width, height);
-        ctx.beginPath(); ctx.strokeStyle = '#d1d1d6'; ctx.lineWidth = 1.5; ctx.moveTo(0, midY); ctx.lineTo(width, midY); ctx.stroke();
+        // Dotted Horizon
+        ctx.beginPath(); ctx.strokeStyle = '#e0e0e0'; ctx.lineWidth = 1.5; ctx.setLineDash([8, 8]); ctx.moveTo(0, midY); ctx.lineTo(width, midY); ctx.stroke(); ctx.setLineDash([]);
+        
         guides.forEach(g => { ctx.beginPath(); ctx.strokeStyle = '#d0d0d0'; ctx.setLineDash([4, 4]); ctx.arc(g.p1.x, g.p1.y, getDist(g.p1, g.p2), 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]); });
         getIntersections().forEach(pt => { ctx.beginPath(); ctx.strokeStyle = 'rgba(0,122,255,0.3)'; ctx.arc(pt.x, pt.y, 8, 0, Math.PI * 2); ctx.stroke(); });
         segments.forEach(s => { ctx.beginPath(); ctx.strokeStyle = '#1d1d1f'; ctx.lineWidth = 2.5; ctx.moveTo(s.p1.x, s.p1.y); ctx.lineTo(s.p2.x, s.p2.y); ctx.stroke(); });
