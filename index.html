@@ -114,7 +114,24 @@
 
     function performErase(x, y) {
         const pointIdx = points.findIndex(p => getDist(p, {x, y}) < 20);
-        if (pointIdx !== -1) { const p = points[pointIdx]; segments = segments.filter(s => s.p1 !== p && s.p2 !== p); guides = guides.filter(g => g.p1 !== p && g.p2 !== p); points.splice(pointIdx, 1); return; }
+        if (pointIdx !== -1) {
+            const p = points[pointIdx];
+            // FIND HEALING CANDIDATES
+            const connected = segments.filter(s => s.p1 === p || s.p2 === p);
+            if (connected.length === 2) {
+                const s1 = connected[0], s2 = connected[1];
+                const pA = s1.p1 === p ? s1.p2 : s1.p1;
+                const pB = s2.p1 === p ? s2.p2 : s2.p1;
+                const d1 = getDist(pA, p), d2 = getDist(pB, p), dTot = getDist(pA, pB);
+                if (Math.abs(d1 + d2 - dTot) < 1.0) { // Collinear healing
+                    segments.push({p1: pA, p2: pB});
+                }
+            }
+            segments = segments.filter(s => s.p1 !== p && s.p2 !== p);
+            guides = guides.filter(g => g.p1 !== p && g.p2 !== p);
+            points.splice(pointIdx, 1);
+            return;
+        }
         const segmentIdx = segments.findIndex(s => { const d1 = getDist(s.p1, {x, y}), d2 = getDist(s.p2, {x, y}), dt = getDist(s.p1, s.p2); return Math.abs(d1 + d2 - dt) < 1.5; });
         if (segmentIdx !== -1) { segments.splice(segmentIdx, 1); return; }
         const guideIdx = guides.findIndex(g => { const d = getDist(g.p1, {x, y}), r = getDist(g.p1, g.p2); return Math.abs(d - r) < 5.0; });
@@ -139,13 +156,12 @@
             const connected = segments.filter(s => s.p1 === vertex || s.p2 === vertex).map(s => { const p2 = s.p1 === vertex ? s.p2 : s.p1; return { p: p2, angle: Math.atan2(p2.y - vertex.y, p2.x - vertex.x) }; }).sort((a, b) => a.angle - b.angle);
             for (let i = 0; i < connected.length; i++) {
                 const s1 = connected[i], s2 = connected[(i + 1) % connected.length];
-                let diff = s2.angle - s1.angle; if (diff < 0) diff += Math.PI * 2; if (diff > Math.PI) continue; // Only measure interior angles
+                let diff = s2.angle - s1.angle; if (diff < 0) diff += Math.PI * 2; if (diff > Math.PI) continue;
                 const deg = Math.round(diff * 180 / Math.PI);
                 if (deg > 5 && deg < 175) {
-                    if (deg === 90) { // Right angle square
+                    if (deg === 90) { 
                         const v1 = {x: (s1.p.x - vertex.x), y: (s1.p.y - vertex.y)}, v2 = {x: (s2.p.x - vertex.x), y: (s2.p.y - vertex.y)};
-                        const mag1 = Math.sqrt(v1.x**2+v1.y**2), mag2 = Math.sqrt(v2.x**2+v2.y**2);
-                        const u1 = {x: v1.x/mag1*20, y: v1.y/mag1*20}, u2 = {x: v2.x/mag2*20, y: v2.y/mag2*20};
+                        const u1 = {x: v1.x/Math.sqrt(v1.x**2+v1.y**2)*18, y: v1.y/Math.sqrt(v1.x**2+v1.y**2)*18}, u2 = {x: v2.x/Math.sqrt(v2.x**2+v2.y**2)*18, y: v2.y/Math.sqrt(v2.x**2+v2.y**2)*18};
                         ctx.beginPath(); ctx.strokeStyle = '#007AFF'; ctx.lineWidth = 1.5; ctx.moveTo(vertex.x + u1.x, vertex.y + u1.y); ctx.lineTo(vertex.x + u1.x + u2.x, vertex.y + u1.y + u2.y); ctx.lineTo(vertex.x + u2.x, vertex.y + u2.y); ctx.stroke();
                     } else {
                         if (!angleGroups[deg]) angleGroups[deg] = [];
