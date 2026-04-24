@@ -19,17 +19,15 @@
     #toolbar { top: 72px; left: 24px; }
     #filter-dock { top: 72px; right: 24px; }
 
-    button { background: white; border: 1px solid var(--border); border-radius: 14px; width: 56px; height: 56px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); }
-    button svg { width: 34px; height: 34px; stroke-width: 2.2; }
+    button { background: white; border: 1px solid var(--border); border-radius: 14px; width: 56px; height: 56px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); outline: none; }
+    button svg { width: 34px; height: 34px; stroke-width: 2.2; pointer-events: none; }
     
-    /* Active Tool States */
     #toolbar button.active { background: var(--accent); border-color: var(--accent); transform: scale(1.08); }
     #toolbar button.active svg { fill: white; stroke: white; }
     #toolbar button.eraser.active { background: var(--ones); border-color: var(--ones); }
     #toolbar button.eraser.active svg { stroke: white; }
     #toolbar button.danger svg { fill: none; stroke: var(--ones); stroke-width: 2.8; }
 
-    /* Active Filter States */
     .filter-btn.active.len { background: var(--ones); border-color: var(--ones); }
     .filter-btn.active.ang { background: var(--accent); border-color: var(--accent); }
     .filter-btn.active.par { background: var(--hundreds); border-color: var(--hundreds); }
@@ -68,9 +66,9 @@
     let currentTool = 'point', activePoint = null, dragPos = null, snapTarget = null, cameraScale = 1, cameraX = 0, cameraY = 0;
     let filters = { len: true, ang: true, par: true, inc: true };
 
-    function resize() { width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight; midY = height / 2; cameraY = midY; draw(); }
+    function resize() { width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight; midY = height / 2; cameraX = 0; cameraY = midY; draw(); }
     function setTool(tool) { currentTool = tool; document.querySelectorAll('#toolbar button').forEach(b => b.classList.remove('active')); document.getElementById('btn-' + tool).classList.add('active'); }
-    function toggleFilter(f) { filters[f] = !filters[f]; document.querySelector('.filter-btn.'+f).classList.toggle('active'); draw(); }
+    function toggleFilter(f) { filters[f] = !filters[f]; document.querySelector('.filter-btn.'+f).classList.toggle('active'); }
     function getDist(p1, p2) { return Math.sqrt((p1.x - p2.x)**2 + (p1.y - p2.y)**2); }
     function worldToScreen(x, y) { return { x: (x - cameraX) * cameraScale + width/2, y: (y - cameraY) * cameraScale + height/2 }; }
     function screenToWorld(x, y) { return { x: (x - width/2) / cameraScale + cameraX, y: (y - height/2) / cameraScale + cameraY }; }
@@ -81,7 +79,7 @@
         let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
         points.forEach(p => { minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x); minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y); });
         guides.forEach(g => { const r = getDist(g.p1, g.p2); minX = Math.min(minX, g.p1.x - r); maxX = Math.max(maxX, g.p1.x + r); minY = Math.min(minY, g.p1.y - r); maxY = Math.max(maxY, g.p1.y + r); });
-        const pad = 160, scale = Math.min(width / ((maxX - minX) + pad*2), height / ((maxY - minY) + pad*2), 1.15);
+        const pad = 160, scale = Math.min(width / ((maxX - minX) + pad*2), height / ((maxY - minY) + pad*2), 1.1);
         cameraScale += (scale - cameraScale) * 0.1; cameraX += ((minX + maxX) / 2 - cameraX) * 0.1; cameraY += ((minY + maxY) / 2 - cameraY) * 0.1;
     }
 
@@ -111,28 +109,35 @@
         return p;
     }
 
+    function findSnap(wx, wy) {
+        if (Math.abs(wy - midY) < 30/cameraScale) wy = midY;
+        const all = [...points, ...getIntersections()];
+        let p = all.find(pt => getDist(pt, {x: wx, y: wy}) < 25/cameraScale);
+        return p ? {x: p.x, y: p.y} : {x: wx, y: wy, isNew: true};
+    }
+
     canvas.addEventListener('pointerdown', e => { 
         const world = screenToWorld(e.clientX, e.clientY);
         if (currentTool === 'erase') { 
             const ptIdx = points.findIndex(p => getDist(p, world) < 20/cameraScale);
             if (ptIdx !== -1) { const p = points[ptIdx]; segments = segments.filter(s => s.p1 !== p && s.p2 !== p); guides = guides.filter(g => g.p1 !== p && g.p2 !== p); points.splice(ptIdx, 1); }
             else { const sIdx = segments.findIndex(s => Math.abs(getDist(s.p1, world) + getDist(s.p2, world) - getDist(s.p1, s.p2)) < 1.5/cameraScale); if (sIdx !== -1) segments.splice(sIdx, 1); else { const gIdx = guides.findIndex(g => Math.abs(getDist(g.p1, world) - getDist(g.p1, g.p2)) < 5.0/cameraScale); if (gIdx !== -1) guides.splice(gIdx, 1); } }
-            draw(); return; 
+            return; 
         }
         const snap = findSnap(world.x, world.y);
         if (currentTool === 'point') ensurePoint(snap); else { activePoint = ensurePoint(snap); dragPos = world; }
-        draw();
     });
 
-    canvas.addEventListener('pointermove', e => { if (!activePoint) return; dragPos = screenToWorld(e.clientX, e.clientY); snapTarget = findSnap(dragPos.x, dragPos.y); draw(); });
-    canvas.addEventListener('pointerup', e => { if (activePoint && dragPos) { const end = findSnap(dragPos.x, dragPos.y); const final = ensurePoint(end); if (final !== activePoint) { if (currentTool === 'segment') { const ptsOn = points.filter(p => p !== activePoint && p !== final && Math.abs(getDist(activePoint, p) + getDist(final, p) - getDist(activePoint, final)) < 0.5).sort((a,b) => getDist(activePoint, a) - getDist(activePoint, b)); let curr = activePoint; ptsOn.forEach(p => { segments.push({p1: curr, p2: p}); curr = p; }); segments.push({p1: curr, p2: final}); } else guides.push({p1: activePoint, p2: final}); } } activePoint = null; dragPos = null; snapTarget = null; draw(); });
+    canvas.addEventListener('pointermove', e => { if (!activePoint) return; dragPos = screenToWorld(e.clientX, e.clientY); snapTarget = findSnap(dragPos.x, dragPos.y); });
+    canvas.addEventListener('pointerup', e => { if (activePoint && dragPos) { const end = findSnap(dragPos.x, dragPos.y); const final = ensurePoint(end); if (final !== activePoint) { if (currentTool === 'segment') { const ptsOn = points.filter(p => p !== activePoint && p !== final && Math.abs(getDist(activePoint, p) + getDist(final, p) - getDist(activePoint, final)) < 0.5).sort((a,b) => getDist(activePoint, a) - getDist(activePoint, b)); let curr = activePoint; ptsOn.forEach(p => { segments.push({p1: curr, p2: p}); curr = p; }); segments.push({p1: curr, p2: final}); } else guides.push({p1: activePoint, p2: final}); } } activePoint = null; dragPos = null; snapTarget = null; });
 
-    function clearGuides() { guides = []; draw(); }
-    function clearAll() { points = []; segments = []; guides = []; cameraScale = 1; cameraX = 0; cameraY = midY; draw(); }
+    function clearGuides() { guides = []; }
+    function clearAll() { points = []; segments = []; guides = []; cameraScale = 1; cameraX = 0; cameraY = midY; }
 
     function draw() {
         updateCamera(); ctx.clearRect(0, 0, width, height);
         const hY = worldToScreen(0, midY).y; ctx.beginPath(); ctx.strokeStyle = '#e0e0e0'; ctx.lineWidth = 1.5; ctx.setLineDash([8, 8]); ctx.moveTo(0, hY); ctx.lineTo(width, hY); ctx.stroke(); ctx.setLineDash([]);
+        
         guides.forEach(g => { const p1 = worldToScreen(g.p1.x, g.p1.y), r = getDist(g.p1, g.p2) * cameraScale; ctx.beginPath(); ctx.strokeStyle = '#d8d8d8'; ctx.setLineDash([4, 4]); ctx.arc(p1.x, p1.y, r, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]); });
         
         if (filters.inc) {
