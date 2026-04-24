@@ -14,16 +14,26 @@
     body { font-family: 'Lexend', sans-serif; background: var(--bg); color: var(--text-main); margin: 0; overflow: hidden; touch-action: none; }
     #logo-watermark { position: absolute; top: 24px; left: 24px; pointer-events: none; opacity: 0.9; font-weight: 900; font-size: 1.15rem; letter-spacing: -0.05em; display: flex; align-items: baseline; }
     .logo-bead { width: 5px; height: 5px; background: #a8a8a8; border-radius: 50%; margin-left: 2px; }
-    #toolbar { position: absolute; top: 72px; left: 24px; display: flex; flex-direction: column; gap: 10px; background: var(--glass); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); padding: 12px; border-radius: 20px; box-shadow: var(--shadow-soft); border: 1px solid var(--border); z-index: 100; }
-    button { background: white; border: 1px solid var(--border); border-radius: 14px; width: 56px; height: 56px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.25s cubic-bezier(0.34, 1.56, 0.64, 1); padding: 0; }
-    button svg { width: 32px; height: 32px; transition: 0.2s; }
+    
+    #toolbar { 
+      position: absolute; top: 72px; left: 24px; display: flex; flex-direction: column; gap: 10px; 
+      background: var(--glass); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); 
+      padding: 12px; border-radius: 20px; box-shadow: var(--shadow-soft); border: 1px solid var(--border); z-index: 100; 
+    }
+    button { 
+      background: white; border: 1px solid var(--border); border-radius: 14px; width: 56px; height: 56px; 
+      display: flex; align-items: center; justify-content: center; cursor: pointer; 
+      transition: 0.25s cubic-bezier(0.34, 1.56, 0.64, 1); padding: 0; 
+    }
+    button svg { width: 34px; height: 34px; transition: 0.2s; }
     button.active { background: var(--accent); border-color: var(--accent); transform: scale(1.08); }
     button.active svg { fill: white; stroke: white; }
     button.eraser.active { background: var(--ones); border-color: var(--ones); }
     button.eraser svg { stroke: var(--text-main); fill: none; }
     button.eraser.active svg { stroke: white; }
-    button.danger svg { fill: var(--ones); stroke: var(--ones); }
+    button.danger svg { fill: none; stroke: var(--ones); }
     button:active { transform: scale(0.92); }
+
     canvas { display: block; background: #fff; cursor: crosshair; }
     footer { position: absolute; bottom: 12px; left: 0; right: 0; text-align: center; font-size: 0.6rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #AEAEB2; pointer-events: none; opacity: 0.5; }
   </style>
@@ -32,28 +42,27 @@
 <div id="logo-watermark">Math Things<span class="logo-bead"></span></div>
 <div id="toolbar">
   <button id="btn-point" class="active" onclick="setTool('point')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="6" fill="currentColor"/></svg></button>
-  <button id="btn-segment" onclick="setTool('segment')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="19" y1="5" x2="5" y2="19"/></svg></button>
+  <button id="btn-segment" onclick="setTool('segment')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><line x1="19" y1="5" x2="5" y2="19"/></svg></button>
   <button id="btn-circle" onclick="setTool('circle')">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
       <path d="M12 2v2M12 4L8 22M12 4l4 18M10 16h4M12 11a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/>
-      <circle cx="8" cy="22" r="1" fill="currentColor"/><circle cx="16" cy="22" r="1" fill="currentColor"/>
+      <path d="M8 22l-1 2h2l-1-2z" fill="currentColor" stroke="none"/><path d="M16 22l-1 2h2l-1-2z" fill="currentColor" stroke="none"/>
     </svg>
   </button>
+  <button id="btn-clear-guides" onclick="clearGuides()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="3,3"><circle cx="12" cy="12" r="8"/><line x1="15" y1="9" x2="9" y2="15" stroke-dasharray="none" stroke-width="2.5"/></svg></button>
   <button id="btn-erase" class="eraser" onclick="setTool('erase')"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-  <button class="danger" onclick="clearAll()" style="margin-top: 10px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
+  <button class="danger" onclick="clearAll()" style="margin-top: 10px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8.1 8.1 0 0 0-15.5-2m-.5 5v-5h5M4 13a8.1 8.1 0 0 0 15.5 2m.5-5v5h-5"/></svg></button>
 </div>
 <canvas id="canvas"></canvas>
 <footer>Math Things. | Math, in your hands.</footer>
 <script>
     const canvas = document.getElementById('canvas'), ctx = canvas.getContext('2d');
     let width, height, midY, points = [], segments = [], guides = []; 
-    let currentTool = 'point', activePoint = null, dragPos = null, snapTarget = null;
-    let cameraScale = 1, cameraX = 0, cameraY = 0;
+    let currentTool = 'point', activePoint = null, dragPos = null, snapTarget = null, cameraScale = 1, cameraX = 0, cameraY = 0;
 
-    function resize() { width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight; midY = height / 2; draw(); }
+    function resize() { width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight; midY = height / 2; cameraY = midY; draw(); }
     function setTool(tool) { currentTool = tool; document.querySelectorAll('#toolbar button').forEach(b => b.classList.remove('active')); document.getElementById('btn-' + tool).classList.add('active'); }
     function getDist(p1, p2) { return Math.sqrt((p1.x - p2.x)**2 + (p1.y - p2.y)**2); }
-
     function worldToScreen(x, y) { return { x: (x - cameraX) * cameraScale + width/2, y: (y - cameraY) * cameraScale + height/2 }; }
     function screenToWorld(x, y) { return { x: (x - width/2) / cameraScale + cameraX, y: (y - height/2) / cameraScale + cameraY }; }
 
@@ -62,9 +71,8 @@
         let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
         points.forEach(p => { minX = Math.min(minX, p.x); maxX = Math.max(maxX, p.x); minY = Math.min(minY, p.y); maxY = Math.max(maxY, p.y); });
         guides.forEach(g => { const r = getDist(g.p1, g.p2); minX = Math.min(minX, g.p1.x - r); maxX = Math.max(maxX, g.p1.x + r); minY = Math.min(minY, g.p1.y - r); maxY = Math.max(maxY, g.p1.y + r); });
-        const pad = 80;
-        const targetW = (maxX - minX) + pad*2, targetH = (maxY - minY) + pad*2;
-        const scale = Math.min(width / targetW, height / targetH, 1);
+        const pad = 120, targetW = (maxX - minX) + pad*2, targetH = (maxY - minY) + pad*2;
+        const scale = Math.min(width / targetW, height / targetH, 1.2);
         cameraScale += (scale - cameraScale) * 0.1;
         cameraX += ((minX + maxX) / 2 - cameraX) * 0.1;
         cameraY += ((minY + maxY) / 2 - cameraY) * 0.1;
@@ -85,12 +93,7 @@
                 const t = ((s1.p1.x - s2.p1.x) * (s2.p1.y - s2.p2.y) - (s1.p1.y - s2.p1.y) * (s2.p1.x - s2.p2.x)) / den, u = -((s1.p1.x - s1.p2.x) * (s1.p1.y - s2.p1.y) - (s1.p1.y - s1.p2.y) * (s1.p1.x - s2.p1.x)) / den;
                 if (t >= 0 && t <= 1 && u >= 0 && u <= 1) inters.push({x: s1.p1.x + t * (s1.p2.x - s1.p1.x), y: s1.p1.y + t * (s1.p2.y - s1.p1.y)});
             });
-            guides.forEach(g => {
-                const r = getDist(g.p1, g.p2), dx = s1.p2.x - s1.p1.x, dy = s1.p2.y - s1.p1.y, fx = s1.p1.x - g.p1.x, fy = s1.p1.y - g.p1.y;
-                const a = dx*dx + dy*dy, b = 2*(fx*dx + fy*dy), c = (fx*fx + fy*fy) - r*r;
-                let disc = b*b - 4*a*c;
-                if (disc >= 0) { disc = Math.sqrt(disc); const t1 = (-b - disc)/(2*a), t2 = (-b + disc)/(2*a); if (t1 >= 0 && t1 <= 1) inters.push({x: s1.p1.x + t1*dx, y: s1.p1.y + t1*dy}); if (t2 >= 0 && t2 <= 1) inters.push({x: s1.p1.x + t2*dx, y: s1.p1.y + t2*dy}); }
-            });
+            guides.forEach(g => { const r = getDist(g.p1, g.p2), dx = s1.p2.x - s1.p1.x, dy = s1.p2.y - s1.p1.y, fx = s1.p1.x - g.p1.x, fy = s1.p1.y - g.p1.y; const a = dx*dx + dy*dy, b = 2*(fx*dx + fy*dy), c = (fx*fx + fy*fy) - r*r; let d = b*b - 4*a*c; if (d >= 0) { d = Math.sqrt(d); const t1 = (-b-d)/(2*a), t2 = (-b+d)/(2*a); if (t1>=0 && t1<=1) inters.push({x: s1.p1.x+t1*dx, y: s1.p1.y+t1*dy}); if (t2>=0 && t2<=1) inters.push({x: s1.p1.x+t2*dx, y: s1.p1.y+t2*dy}); } });
         });
         return inters;
     }
@@ -104,7 +107,7 @@
 
     function ensurePoint(snap) {
         let p = points.find(pt => Math.abs(pt.x - snap.x) < 0.1 && Math.abs(pt.y - snap.y) < 0.1);
-        if (!p) { p = {x: snap.x, y: snap.y}; points.push(p); segments.forEach((s, idx) => { const d1 = getDist(s.p1, p), d2 = getDist(s.p2, p), dTot = getDist(s.p1, s.p2); if (Math.abs(d1 + d2 - dTot) < 0.5 && d1 > 2 && d2 > 2) { segments.splice(idx, 1); segments.push({p1: s.p1, p2: p}, {p1: p, p2: s.p2}); } }); }
+        if (!p) { p = {x: snap.x, y: snap.y}; points.push(p); segments.forEach((s, idx) => { const d1 = getDist(s.p1, p), d2 = getDist(s.p2, p), dt = getDist(s.p1, s.p2); if (Math.abs(d1+d2-dt) < 0.5 && d1>2 && d2>2) { segments.splice(idx, 1); segments.push({p1: s.p1, p2: p}, {p1: p, p2: s.p2}); } }); }
         return p;
     }
 
@@ -112,16 +115,8 @@
         const world = screenToWorld(e.clientX, e.clientY);
         if (currentTool === 'erase') { 
             const ptIdx = points.findIndex(p => getDist(p, world) < 20/cameraScale);
-            if (ptIdx !== -1) { 
-                const p = points[ptIdx];
-                const conn = segments.filter(s => s.p1 === p || s.p2 === p);
-                if (conn.length === 2) { const pA = conn[0].p1 === p ? conn[0].p2 : conn[0].p1, pB = conn[1].p1 === p ? conn[1].p2 : conn[1].p1; if (Math.abs(getDist(pA, p) + getDist(pB, p) - getDist(pA, pB)) < 1.0) segments.push({p1: pA, p2: pB}); }
-                segments = segments.filter(s => s.p1 !== p && s.p2 !== p); guides = guides.filter(g => g.p1 !== p && g.p2 !== p); points.splice(ptIdx, 1);
-            } else {
-                const segIdx = segments.findIndex(s => Math.abs(getDist(s.p1, world) + getDist(s.p2, world) - getDist(s.p1, s.p2)) < 1.5/cameraScale);
-                if (segIdx !== -1) segments.splice(segIdx, 1);
-                else { const gIdx = guides.findIndex(g => Math.abs(getDist(g.p1, world) - getDist(g.p1, g.p2)) < 5.0/cameraScale); if (gIdx !== -1) guides.splice(gIdx, 1); }
-            }
+            if (ptIdx !== -1) { const p = points[ptIdx]; const conn = segments.filter(s => s.p1 === p || s.p2 === p); if (conn.length === 2) { const pA = conn[0].p1 === p ? conn[0].p2 : conn[0].p1, pB = conn[1].p1 === p ? conn[1].p2 : conn[1].p1; if (Math.abs(getDist(pA, p) + getDist(pB, p) - getDist(pA, pB)) < 1.0) segments.push({p1: pA, p2: pB}); } segments = segments.filter(s => s.p1 !== p && s.p2 !== p); guides = guides.filter(g => g.p1 !== p && g.p2 !== p); points.splice(ptIdx, 1); }
+            else { const sIdx = segments.findIndex(s => Math.abs(getDist(s.p1, world) + getDist(s.p2, world) - getDist(s.p1, s.p2)) < 1.5/cameraScale); if (sIdx !== -1) segments.splice(sIdx, 1); else { const gIdx = guides.findIndex(g => Math.abs(getDist(g.p1, world) - getDist(g.p1, g.p2)) < 5.0/cameraScale); if (gIdx !== -1) guides.splice(gIdx, 1); } }
             draw(); return; 
         }
         const snap = findSnap(world.x, world.y);
@@ -133,35 +128,31 @@
     canvas.addEventListener('pointermove', e => { if (!activePoint) return; dragPos = screenToWorld(e.clientX, e.clientY); snapTarget = findSnap(dragPos.x, dragPos.y); draw(); });
     canvas.addEventListener('pointerup', e => { if (activePoint && dragPos) { const end = findSnap(dragPos.x, dragPos.y); const final = ensurePoint(end); if (final !== activePoint) { if (currentTool === 'segment') { const ptsOn = points.filter(p => p !== activePoint && p !== final && Math.abs(getDist(activePoint, p) + getDist(final, p) - getDist(activePoint, final)) < 0.5).sort((a,b) => getDist(activePoint, a) - getDist(activePoint, b)); let curr = activePoint; ptsOn.forEach(p => { segments.push({p1: curr, p2: p}); curr = p; }); segments.push({p1: curr, p2: final}); } else guides.push({p1: activePoint, p2: final}); } } activePoint = null; dragPos = null; snapTarget = null; draw(); });
 
+    function clearGuides() { guides = []; draw(); }
     function clearAll() { points = []; segments = []; guides = []; cameraScale = 1; cameraX = 0; cameraY = midY; draw(); }
 
     function draw() {
-        updateCamera();
-        ctx.clearRect(0, 0, width, height);
-        const hLineY = worldToScreen(0, midY).y;
-        ctx.beginPath(); ctx.strokeStyle = '#e0e0e0'; ctx.lineWidth = 1.5; ctx.setLineDash([8, 8]); ctx.moveTo(0, hLineY); ctx.lineTo(width, hLineY); ctx.stroke(); ctx.setLineDash([]);
-        
+        updateCamera(); ctx.clearRect(0, 0, width, height);
+        const hY = worldToScreen(0, midY).y; ctx.beginPath(); ctx.strokeStyle = '#e0e0e0'; ctx.lineWidth = 1.5; ctx.setLineDash([8, 8]); ctx.moveTo(0, hY); ctx.lineTo(width, hY); ctx.stroke(); ctx.setLineDash([]);
         guides.forEach(g => { const p1 = worldToScreen(g.p1.x, g.p1.y), r = getDist(g.p1, g.p2) * cameraScale; ctx.beginPath(); ctx.strokeStyle = '#d0d0d0'; ctx.setLineDash([4, 4]); ctx.arc(p1.x, p1.y, r, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]); });
         getIntersections().forEach(pt => { const p = worldToScreen(pt.x, pt.y); ctx.beginPath(); ctx.strokeStyle = 'rgba(0,122,255,0.3)'; ctx.arc(p.x, p.y, 8, 0, Math.PI * 2); ctx.stroke(); });
-        segments.forEach(s => { const p1 = worldToScreen(s.p1.x, s.p1.y), p2 = worldToScreen(s.p2.x, s.p2.y); ctx.beginPath(); ctx.strokeStyle = '#1d1d1f'; ctx.lineWidth = 2.5; ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke(); });
+        segments.forEach(s => { const p1 = worldToScreen(s.p1.x, s.p1.y), p2 = worldToScreen(s.p2.x, s.p2.y); ctx.beginPath(); ctx.strokeStyle = '#1d1d1f'; ctx.lineWidth = 2.8; ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke(); });
         
-        // Dynamic Constraints
-        const lenGroups = {};
-        segments.forEach(s => { const l = Math.round(getDist(s.p1, s.p2)); if(l > 5) { if(!lenGroups[l]) lenGroups[l] = []; lenGroups[l].push(s); } });
-        let ts = 1; Object.keys(lenGroups).sort((a,b)=>a-b).forEach(k => { if(lenGroups[k].length > 1) { lenGroups[k].forEach(s => { const p1 = worldToScreen(s.p1.x, s.p1.y), p2 = worldToScreen(s.p2.x, s.p2.y), mx = (p1.x+p2.x)/2, my = (p1.y+p2.y)/2, ang = Math.atan2(p2.y-p1.y, p2.x-p1.x)+Math.PI/2; ctx.beginPath(); ctx.strokeStyle='#007AFF'; ctx.lineWidth=2; for(let i=0; i<ts; i++) { const off = (i-(ts-1)/2)*6, ox = Math.cos(ang-Math.PI/2)*off, oy = Math.sin(ang-Math.PI/2)*off; ctx.moveTo(mx+ox-Math.cos(ang)*8, my+oy-Math.sin(ang)*8); ctx.lineTo(mx+ox+Math.cos(ang)*8, my+oy+Math.sin(ang)*8); } ctx.stroke(); }); ts++; } });
+        const lenGroups = {}; segments.forEach(s => { const l = Math.round(getDist(s.p1, s.p2)); if(l > 5) { if(!lenGroups[l]) lenGroups[l] = []; lenGroups[l].push(s); } });
+        let ts = 1; Object.keys(lenGroups).sort((a,b)=>a-b).forEach(k => { if(lenGroups[k].length > 1) { lenGroups[k].forEach(s => { const p1 = worldToScreen(s.p1.x, s.p1.y), p2 = worldToScreen(s.p2.x, s.p2.y), mx = (p1.x+p2.x)/2, my = (p1.y+p2.y)/2, ang = Math.atan2(p2.y-p1.y, p2.x-p1.x)+Math.PI/2; ctx.beginPath(); ctx.strokeStyle='#007AFF'; ctx.lineWidth=2.2; for(let i=0; i<ts; i++) { const off = (i-(ts-1)/2)*6, ox = Math.cos(ang-Math.PI/2)*off, oy = Math.sin(ang-Math.PI/2)*off; ctx.moveTo(mx+ox-Math.cos(ang)*8, my+oy-Math.sin(ang)*8); ctx.lineTo(mx+ox+Math.cos(ang)*8, my+oy+Math.sin(ang)*8); } ctx.stroke(); }); ts++; } });
         
         points.forEach(v => {
             const conn = segments.filter(s => s.p1 === v || s.p2 === v).map(s => { const p2 = s.p1 === v ? s.p2 : s.p1; return { p: worldToScreen(p2.x, p2.y), a: Math.atan2(worldToScreen(p2.x, p2.y).y - worldToScreen(v.x, v.y).y, worldToScreen(p2.x, p2.y).x - worldToScreen(v.x, v.y).x) }; }).sort((a,b) => a.a-b.a);
             for(let i=0; i<conn.length; i++) { const s1 = conn[i], s2 = conn[(i+1)%conn.length]; let d = s2.a-s1.a; if(d<0) d+=Math.PI*2; if(d>Math.PI) continue; const deg = Math.round(d*180/Math.PI);
                 const vs = worldToScreen(v.x, v.y);
-                if(deg === 90) { const v1 = {x: s1.p.x-vs.x, y: s1.p.y-vs.y}, v2 = {x: s2.p.x-vs.x, y: s2.p.y-vs.y}, m1 = Math.sqrt(v1.x**2+v1.y**2), m2 = Math.sqrt(v2.x**2+v2.y**2), u1 = {x: v1.x/m1*18, y: v1.y/m1*18}, u2 = {x: v2.x/m2*18, y: v2.y/m2*18}; ctx.beginPath(); ctx.strokeStyle='#007AFF'; ctx.lineWidth=1.5; ctx.moveTo(vs.x+u1.x, vs.y+u1.y); ctx.lineTo(vs.x+u1.x+u2.x, vs.y+u1.y+u2.y); ctx.lineTo(vs.x+u2.x, vs.y+u2.y); ctx.stroke(); }
-                else if(deg > 5 && deg < 175) { ctx.beginPath(); ctx.strokeStyle='#007AFF'; ctx.lineWidth=1.5; ctx.arc(vs.x, vs.y, 25, s1.a, s2.a); ctx.stroke(); }
+                if(deg === 90) { const v1 = {x: s1.p.x-vs.x, y: s1.p.y-vs.y}, v2 = {x: s2.p.x-vs.x, y: s2.p.y-vs.y}, m1 = Math.sqrt(v1.x**2+v1.y**2), m2 = Math.sqrt(v2.x**2+v2.y**2), u1 = {x: v1.x/m1*18, y: v1.y/m1*18}, u2 = {x: v2.x/m2*18, y: v2.y/m2*18}; ctx.beginPath(); ctx.strokeStyle='#007AFF'; ctx.lineWidth=1.8; ctx.moveTo(vs.x+u1.x, vs.y+u1.y); ctx.lineTo(vs.x+u1.x+u2.x, vs.y+u1.y+u2.y); ctx.lineTo(vs.x+u2.x, vs.y+u2.y); ctx.stroke(); }
+                else if(deg > 5 && deg < 175) { ctx.beginPath(); ctx.strokeStyle='#007AFF'; ctx.lineWidth=1.8; ctx.arc(vs.x, vs.y, 25, s1.a, s2.a); ctx.stroke(); }
             }
         });
 
         if (activePoint && dragPos) { const p1 = worldToScreen(activePoint.x, activePoint.y), p2 = worldToScreen(snapTarget?.x || dragPos.x, snapTarget?.y || dragPos.y); ctx.beginPath(); ctx.strokeStyle = 'rgba(0,122,255,0.4)'; if (currentTool === 'segment') { ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); } else { ctx.arc(p1.x, p1.y, getDist(p1, p2), 0, Math.PI * 2); } ctx.stroke(); }
         points.forEach(p => { const s = worldToScreen(p.x, p.y), g = ctx.createRadialGradient(s.x-2, s.y-2, 0, s.x, s.y, 6); g.addColorStop(0, '#efefef'); g.addColorStop(0.5, '#a8a8a8'); g.addColorStop(1, '#888'); ctx.beginPath(); ctx.fillStyle = (p === activePoint || (snapTarget && Math.abs(snapTarget.x - p.x) < 0.1)) ? '#007AFF' : g; ctx.arc(s.x, s.y, 5.5, 0, Math.PI * 2); ctx.fill(); if (p !== activePoint) { ctx.strokeStyle = 'rgba(0,0,0,0.1)'; ctx.stroke(); } });
-        if (points.length > 1) requestAnimationFrame(draw);
+        requestAnimationFrame(draw);
     }
     window.addEventListener('resize', resize); resize();
 </script>
