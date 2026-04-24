@@ -14,27 +14,33 @@
     body { font-family: 'Lexend', sans-serif; background: var(--bg); color: var(--text-main); margin: 0; overflow: hidden; touch-action: none; }
     
     #logo-watermark {
-      position: absolute; top: 20px; left: 24px; pointer-events: none; opacity: 0.9;
-      font-weight: 900; font-size: 1.1rem; letter-spacing: -0.05em; display: flex; align-items: baseline;
+      position: absolute; top: 24px; left: 24px; pointer-events: none; opacity: 0.9;
+      font-weight: 900; font-size: 1.15rem; letter-spacing: -0.05em; display: flex; align-items: baseline;
     }
     .logo-bead { width: 5px; height: 5px; background: #a8a8a8; border-radius: 50%; margin-left: 2px; }
 
     #toolbar { 
-      position: absolute; top: 64px; left: 24px;
-      display: flex; flex-direction: column; gap: 8px; background: var(--glass); 
-      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-      padding: 10px; border-radius: 16px; box-shadow: var(--shadow-soft); border: 1px solid var(--border); z-index: 100;
+      position: absolute; top: 72px; left: 24px;
+      display: flex; flex-direction: column; gap: 10px; background: var(--glass); 
+      backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+      padding: 12px; border-radius: 20px; box-shadow: var(--shadow-soft); border: 1px solid var(--border); z-index: 100;
     }
     button { 
-      background: white; border: 1px solid var(--border); border-radius: 10px; 
-      padding: 12px; font-family: 'Lexend'; font-weight: 600; font-size: 0.8rem; 
-      cursor: pointer; transition: 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-      text-align: left; width: 130px;
+      background: white; border: 1px solid var(--border); border-radius: 14px; 
+      width: 56px; height: 56px; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: 0.25s cubic-bezier(0.34, 1.56, 0.64, 1); padding: 0;
     }
-    button.active { background: var(--accent); color: white; border-color: var(--accent); transform: scale(1.02); }
-    button.eraser.active { background: var(--ones); color: white; border-color: var(--ones); }
-    button.danger { color: var(--ones); margin-top: 8px; border-style: dashed; }
-    button:active { transform: scale(0.98); }
+    button svg { width: 28px; height: 28px; transition: 0.2s; }
+    
+    button.active { background: var(--accent); border-color: var(--accent); transform: scale(1.08); }
+    button.active svg { fill: white; stroke: white; }
+    
+    button.eraser.active { background: var(--ones); border-color: var(--ones); }
+    button.eraser svg { stroke: var(--text-main); fill: none; }
+    button.eraser.active svg { stroke: white; }
+    
+    button.danger svg { fill: var(--ones); stroke: var(--ones); }
+    button:active { transform: scale(0.92); }
 
     canvas { display: block; background: #fff; cursor: crosshair; }
     
@@ -50,11 +56,24 @@
 <div id="logo-watermark">Math Things<span class="logo-bead"></span></div>
 
 <div id="toolbar">
-  <button id="btn-point" class="active" onclick="setTool('point')">● Point</button>
-  <button id="btn-segment" onclick="setTool('segment')">/ Segment</button>
-  <button id="btn-circle" onclick="setTool('circle')">○ Compass</button>
-  <button id="btn-erase" class="eraser" onclick="setTool('erase')">✕ Remove</button>
-  <button class="danger" onclick="clearAll()">⟲ Reset</button>
+  <button id="btn-point" class="active" onclick="setTool('point')">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="6" fill="currentColor"/></svg>
+  </button>
+  <button id="btn-segment" onclick="setTool('segment')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="19" y1="5" x2="5" y2="19"/></svg>
+  </button>
+  <button id="btn-circle" onclick="setTool('circle')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 3v2M12 5L7 21M12 5l5 16M9 14h6"/>
+      <circle cx="7" cy="21" r="1"/><circle cx="17" cy="21" r="1"/>
+    </svg>
+  </button>
+  <button id="btn-erase" class="eraser" onclick="setTool('erase')">
+    <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+  </button>
+  <button class="danger" onclick="clearAll()" style="margin-top: 10px;">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+  </button>
 </div>
 
 <canvas id="canvas"></canvas>
@@ -67,8 +86,7 @@
     let currentTool = 'point', activePoint = null, dragPos = null, snapTarget = null;
 
     function resize() {
-        width = canvas.width = window.innerWidth;
-        height = canvas.height = window.innerHeight;
+        width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight;
         midY = height / 2;
         if (lastMidY !== undefined) { const dy = midY - lastMidY; points.forEach(p => p.y += dy); }
         lastMidY = midY; draw();
@@ -189,9 +207,7 @@
 
     function draw() {
         ctx.clearRect(0, 0, width, height);
-        // Dotted Horizon
         ctx.beginPath(); ctx.strokeStyle = '#e0e0e0'; ctx.lineWidth = 1.5; ctx.setLineDash([8, 8]); ctx.moveTo(0, midY); ctx.lineTo(width, midY); ctx.stroke(); ctx.setLineDash([]);
-        
         guides.forEach(g => { ctx.beginPath(); ctx.strokeStyle = '#d0d0d0'; ctx.setLineDash([4, 4]); ctx.arc(g.p1.x, g.p1.y, getDist(g.p1, g.p2), 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]); });
         getIntersections().forEach(pt => { ctx.beginPath(); ctx.strokeStyle = 'rgba(0,122,255,0.3)'; ctx.arc(pt.x, pt.y, 8, 0, Math.PI * 2); ctx.stroke(); });
         segments.forEach(s => { ctx.beginPath(); ctx.strokeStyle = '#1d1d1f'; ctx.lineWidth = 2.5; ctx.moveTo(s.p1.x, s.p1.y); ctx.lineTo(s.p2.x, s.p2.y); ctx.stroke(); });
